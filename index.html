@@ -1,53 +1,79 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>MiniCAD 2D</title>
+<title>MiniCAD</title>
 <style>
-:root{--bg:#1b1d22;--panel:#23262d;--line:#363a44;--txt:#d8dbe2;--dim:#8a909c;--acc:#4da3ff}
+:root{--bg:#1e2227;--panel:#2b2f36;--panel2:#23272d;--line:#3d424c;--txt:#dfe3ea;--dim:#8f96a3;--acc:#3b9cff}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font:13px system-ui,-apple-system,"Segoe UI",sans-serif;overflow:hidden}
-#app{display:grid;height:100%;grid-template-columns:58px 1fr 250px;grid-template-rows:40px 1fr 30px 26px;
- grid-template-areas:"top top top" "tools cv side" "tools cmd side" "status status status"}
-#top{grid-area:top;display:flex;align-items:center;gap:4px;padding:0 8px;background:var(--panel);border-bottom:1px solid var(--line);overflow-x:auto;white-space:nowrap}
-#top b{margin-right:10px;color:var(--acc)}
-#tools{grid-area:tools;background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;gap:2px;padding:4px;overflow-y:auto}
+#app{display:grid;height:100%;grid-template-columns:minmax(0,1fr) 285px;grid-template-rows:34px auto minmax(0,1fr) auto 24px;
+ grid-template-areas:"top top" "tools side" "cv side" "cmd side" "status status"}
+#top{grid-area:top;display:flex;align-items:center;gap:4px;padding:0 8px;background:#1a1d22;border-bottom:1px solid var(--line);overflow-x:auto;white-space:nowrap}
+#top b{margin-right:10px;color:var(--acc);letter-spacing:.04em}
+#tools{grid-area:tools;background:var(--panel);border-bottom:1px solid #15181c;display:flex;align-items:stretch;overflow-x:auto;overflow-y:hidden;min-height:96px}
+.panel{display:flex;flex-direction:column;padding:3px 6px 0;border-right:1px solid var(--line);flex:none}
+.pbody{display:grid;grid-auto-flow:column;grid-template-rows:repeat(3,25px);gap:1px 2px;flex:1}
+.pbody.pp{grid-auto-flow:row;grid-template-rows:repeat(3,25px);grid-template-columns:62px 98px auto;align-items:center;column-gap:4px}
+.pbody.pp select{width:98px;padding:1px 3px;font-size:11px;height:22px}
+.pbody.pp label{color:var(--dim);font-size:11px}
+.pbody.pp .tool{grid-column:3}
+.ptitle{font-size:10px;text-align:center;color:var(--dim);border-top:1px solid var(--line);margin-top:2px;padding:1px 0 2px;text-transform:uppercase;letter-spacing:.06em}
 #side{grid-area:side;background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;padding:8px}
 #cvwrap{grid-area:cv;position:relative;min-width:0;min-height:0}
 #cv{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:crosshair;touch-action:none}
-#cmdrow{grid-area:cmd;display:flex;align-items:center;gap:6px;padding:0 8px;background:var(--panel);border-top:1px solid var(--line)}
-#cmd{flex:1;background:#14161a;border:1px solid var(--line);color:var(--txt);padding:3px 8px;border-radius:4px;font:13px ui-monospace,monospace}
-#status{grid-area:status;display:flex;align-items:center;gap:6px;padding:0 8px;background:#15171b;border-top:1px solid var(--line);overflow:hidden;white-space:nowrap}
-#msg{color:var(--dim);overflow:hidden;text-overflow:ellipsis;flex:1}
-button,select{background:#2d3139;color:var(--txt);border:1px solid var(--line);border-radius:4px;padding:4px 8px;font:inherit;cursor:pointer}
-button:hover{background:#383d47}
-button.on,button.active{background:var(--acc);color:#000;border-color:var(--acc)}
-.tool{display:flex;flex-direction:column;align-items:center;padding:3px 0;font-size:10px;line-height:1.1}
-.tool i{font-style:normal;font-size:16px;line-height:1.2}
-.sep{height:1px;background:var(--line);margin:3px 2px}
+#cmdarea{grid-area:cmd;background:#14171b;border-top:2px solid var(--line);position:relative}
+#hist{height:56px;overflow-y:auto;padding:3px 10px;font:12px ui-monospace,SFMono-Regular,Menlo,monospace;color:#9aa3b2;line-height:1.35}
+#hist .u{color:#e8ecf3}#hist .m{color:#7fb0ff}
+#cmdrow{display:flex;align-items:center;gap:8px;padding:3px 10px;border-top:1px solid #262a31}
+#prompt{color:#9fd0ff;font:12px ui-monospace,SFMono-Regular,Menlo,monospace;white-space:nowrap;max-width:62%;overflow:hidden;text-overflow:ellipsis}
+#cmd{flex:1;min-width:80px;background:#0e1013;border:1px solid var(--line);color:#fff;padding:3px 8px;border-radius:3px;font:13px ui-monospace,SFMono-Regular,Menlo,monospace}
+#sug{position:absolute;left:10px;bottom:34px;min-width:300px;max-width:520px;background:#1d2127;border:1px solid var(--line);box-shadow:0 6px 20px rgba(0,0,0,.5);display:none;z-index:30;max-height:240px;overflow:auto}
+#sug div{padding:3px 10px;font:12px ui-monospace,SFMono-Regular,Menlo,monospace;cursor:pointer;display:flex;gap:14px;justify-content:space-between}
+#sug div span{color:var(--dim)}
+#sug div.sel,#sug div:hover{background:var(--acc);color:#000}#sug div.sel span,#sug div:hover span{color:#123}
+#status{grid-area:status;display:flex;align-items:center;gap:4px;padding:0 8px;background:#15171b;border-top:1px solid var(--line);overflow:hidden;white-space:nowrap}
+#status button{padding:1px 8px;font-size:11px}
+#msg{color:var(--dim);overflow:hidden;text-overflow:ellipsis;flex:1;margin-left:8px}
+button,select{background:#343a43;color:var(--txt);border:1px solid var(--line);border-radius:3px;padding:4px 8px;font:inherit;cursor:pointer}
+button:hover{background:#414853}
+button.on,button.active{background:var(--acc);color:#001;border-color:var(--acc)}
+.tool{display:flex;align-items:center;gap:5px;padding:0 7px 0 4px;font-size:11.5px;white-space:nowrap;background:transparent;border:1px solid transparent;min-width:86px;height:25px;text-align:left}
+.tool i{font-style:normal;width:18px;text-align:center;font-size:14px;line-height:1}
+.tool:hover{background:#3a414b;border-color:var(--line)}
+.tool.active{background:var(--acc);color:#001}
 h4{margin:12px 0 6px;font-size:11px;text-transform:uppercase;color:var(--dim);letter-spacing:.06em}
 h4:first-child{margin-top:0}
-.layer{display:flex;align-items:center;gap:6px;padding:3px 4px;border-radius:4px;cursor:pointer}
-.layer.cur{background:#2e3a4d}
-.layer span{flex:1;overflow:hidden;text-overflow:ellipsis}
-.layer input[type=color]{width:20px;height:20px;padding:0;border:0;background:none}
+.layer{display:flex;align-items:center;gap:2px;padding:2px 2px;border-radius:3px;cursor:pointer}
+.layer.cur{background:#2f4157}
+.layer span{flex:1;overflow:hidden;text-overflow:ellipsis;min-width:30px;padding-left:3px}
+.layer input[type=color]{width:18px;height:18px;padding:0;border:0;background:none;flex:none}
+.layer select{width:50px;padding:0 1px;font-size:10px;height:20px;flex:none}
+.lb{padding:0;width:20px;height:20px;line-height:18px;font-size:11px;background:transparent;border:1px solid transparent;flex:none;color:var(--dim)}
+.lb.on{color:var(--txt)}
 #props{color:var(--dim);line-height:1.6}
 #props b{color:var(--txt)}
-#side input[type=number],#side input[type=text],#side textarea,#side select{width:100%;background:#14161a;border:1px solid var(--line);color:var(--txt);border-radius:4px;padding:3px 5px;font:inherit}
-.opt,.prow{display:grid;grid-template-columns:1fr 100px;gap:4px 6px;align-items:center;margin-bottom:4px;color:var(--txt)}
+#side input[type=number],#side input[type=text],#side textarea,#side select{width:100%;background:#14161a;border:1px solid var(--line);color:var(--txt);border-radius:3px;padding:3px 5px;font:inherit}
+.opt,.prow{display:grid;grid-template-columns:1fr 112px;gap:4px 6px;align-items:center;margin-bottom:4px;color:var(--txt)}
 .prow.full{grid-template-columns:1fr}
 .prow label,.opt label{color:var(--dim)}
 .o3,.h3{display:none}
-.vsep{width:1px;height:20px;background:var(--line)}
+.vsep{width:1px;height:20px;background:var(--line);margin:0 2px}
 .v3{display:none}
 body.m3 .v3{display:inline-block}
 body.m3 .v2,body.m3 .o2,body.m3 .h2{display:none}
 body.m3 .o3{display:grid}
 body.m3 .h3{display:block}
 #side input[type=color]{height:26px;padding:0}
-kbd{background:#2d3139;border:1px solid var(--line);border-radius:3px;padding:0 4px;font-size:11px}
-@media(max-width:800px){#app{grid-template-columns:50px 1fr 0}#side{display:none}}
+kbd{background:#343a43;border:1px solid var(--line);border-radius:3px;padding:0 4px;font-size:11px}
+#dlg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:100}
+#dlg .box{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px 16px;min-width:300px;box-shadow:0 10px 40px rgba(0,0,0,.6)}
+#dlg h3{margin:0 0 10px;font-size:14px}
+#dlg .grid{display:grid;grid-template-columns:1fr 130px;gap:6px 10px;align-items:center}
+#dlg input[type=number],#dlg select{background:#14161a;border:1px solid var(--line);color:var(--txt);border-radius:3px;padding:3px 6px;font:inherit;width:100%}
+#dlg .btns{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+@media(max-width:800px){#app{grid-template-columns:minmax(0,1fr) 0}#side{display:none}}
 </style>
 </head>
 <body>
@@ -68,7 +94,7 @@ kbd{background:#2d3139;border:1px solid var(--line);border-radius:3px;padding:0 
     <span class="vsep"></span>
     <button id="bUndo" title="Ctrl+Z">↶ Undo</button>
     <button id="bRedo" title="Ctrl+Y">↷ Redo</button>
-    <button id="bFit">Zoom fit</button>
+    <button id="bFit">Zoom extents</button>
     <span class="vsep v3"></span>
     <button id="bTop" class="v3" title="Key 1">Top</button>
     <button id="bFront" class="v3" title="Key 2">Front</button>
@@ -81,22 +107,32 @@ kbd{background:#2d3139;border:1px solid var(--line);border-radius:3px;padding:0 
   </div>
   <div id="tools"></div>
   <div id="cvwrap"><canvas id="cv"></canvas></div>
-  <div id="cmdrow">
-    <span style="color:var(--dim)">Command:</span>
-    <input id="cmd" autocomplete="off" spellcheck="false" placeholder="Type a number (length) | x,y | @dx,dy | @len&lt;angle | command: line, rect, trim, offset, mirror, text, dim, hatch, 3d, 2d, ze …">
+  <div id="cmdarea">
+    <div id="hist"></div>
+    <div id="sug"></div>
+    <div id="cmdrow">
+      <span id="prompt">Command:</span>
+      <input id="cmd" autocomplete="off" spellcheck="false" placeholder="Type a command (L, C, TR, O, M…), a number, x,y or @dx,dy — just start typing on the drawing">
+    </div>
   </div>
   <div id="side">
     <div class="o2">
-    <h4>Layers</h4>
+    <h4>Layers <span style="text-transform:none;letter-spacing:0;font-weight:normal">(● on · ❄ freeze · 🔒 lock)</span></h4>
     <div id="layers"></div>
     <div style="display:flex;gap:4px;margin-top:6px"><button id="bAddL">+ Layer</button><button id="bDelL">Delete layer</button></div>
     </div>
-    <h4>Properties (edit)</h4>
+    <h4>Properties</h4>
     <div id="props"></div>
     <h4>Options</h4>
     <div class="opt o2"><label>Text / arrow height</label><input id="optTH" type="number" value="10" min="0.01" step="any"></div>
     <div class="opt o2"><label>Dimension type</label><select id="optDim"><option value="a">Aligned</option><option value="h">Horizontal</option><option value="v">Vertical</option></select></div>
     <div class="opt o2"><label>Offset distance</label><input id="optOff" type="number" value="10" min="0" step="any"></div>
+    <div class="opt o2"><label>Fillet radius</label><input id="optFR" type="number" value="10" min="0" step="any"></div>
+    <div class="opt o2"><label>Chamfer distance 1</label><input id="optCD1" type="number" value="10" min="0" step="any"></div>
+    <div class="opt o2"><label>Chamfer distance 2</label><input id="optCD2" type="number" value="10" min="0" step="any"></div>
+    <div class="opt o2"><label>Polygon sides</label><input id="optPolyN" type="number" value="6" min="3" max="200" step="1"></div>
+    <div class="opt o2"><label>Polygon mode</label><select id="optPolyM"><option value="i">Inscribed in circle</option><option value="c">Circumscribed</option></select></div>
+    <div class="opt o2"><label>Boundary creates</label><select id="optBnd"><option value="region">Region</option><option value="pl">Polylines</option></select></div>
     <div class="opt o2"><label>Hatch pattern</label><select id="optPat"><option value="ansi31">Diagonal (ANSI31)</option><option value="cross">Cross-hatch</option><option value="solid">Solid</option></select></div>
     <div class="opt o2"><label>Hatch spacing</label><input id="optSp" type="number" value="5" min="0.01" step="any"></div>
     <div class="opt o2"><label>Hatch angle (°)</label><input id="optAng" type="number" value="45" step="any"></div>
@@ -104,57 +140,57 @@ kbd{background:#2d3139;border:1px solid var(--line);border-radius:3px;padding:0 
     <div class="opt o3"><label>Height (box/cyl/cone/extrude)</label><input id="opt3H" type="number" value="50" min="0.001" step="any"></div>
     <div class="opt o3"><label>Snap step (ground)</label><input id="opt3Snap" type="number" value="10" min="0.001" step="any"></div>
     <div class="opt o3"><label>New solid color</label><input id="opt3Color" type="color" value="#4da3ff"></div>
-    <h4>Shortcuts</h4>
-    <div class="h2" style="color:var(--dim);line-height:1.8">
-      <kbd>V</kbd> Select · <kbd>H</kbd> Pan<br>
-      <kbd>L</kbd> Line · <kbd>P</kbd> Polyline · <kbd>R</kbd> Rectangle<br>
-      <kbd>C</kbd> Circle · <kbd>A</kbd> Arc · <kbd>D</kbd> Measure<br>
-      <kbd>N</kbd> Text · <kbd>I</kbd> Dimension · <kbd>G</kbd> Hatch<br>
-      <kbd>M</kbd> Move · <kbd>O</kbd> Copy · <kbd>T</kbd> Rotate<br>
-      <kbd>W</kbd> Trim · <kbd>F</kbd> Offset · <kbd>S</kbd> Mirror<br>
-      <kbd>Del</kbd> Erase · <kbd>F3</kbd> Grid snap · <kbd>F4</kbd> Object snap<br>
-      <kbd>F7</kbd> Grid · <kbd>F8</kbd> Ortho (or hold <kbd>Shift</kbd>)<br>
-      Wheel: zoom · Middle-drag / <kbd>Space</kbd>+drag: pan<br>
-      Right-click / <kbd>Enter</kbd>: finish · <kbd>Esc</kbd>: cancel<br>
-      Select objects, then drag the blue grips to reshape.
+    <div class="opt o3"><label>Revolve angle (°)</label><input id="opt3Ang" type="number" value="360" min="1" max="360" step="any"></div>
+    <div class="opt o3" style="grid-template-columns:20px 1fr"><input id="opt3Holes" type="checkbox" checked><label for="opt3Holes">Nested shapes become holes</label></div>
+    <h4>Commands &amp; aliases</h4>
+    <div class="h2" style="color:var(--dim);line-height:1.75">
+      Just start typing on the drawing — the command line opens.<br>
+      <kbd>Enter</kbd>/<kbd>Space</kbd> run · empty Enter repeats the last command · <kbd>Tab</kbd>/<kbd>↑↓</kbd> pick a suggestion<br>
+      <b>Draw:</b> <kbd>L</kbd> line · <kbd>PL</kbd> polyline · <kbd>REC</kbd> rectangle · <kbd>POL</kbd> polygon · <kbd>C</kbd> circle · <kbd>A</kbd> arc · <kbd>EL</kbd> ellipse · <kbd>SPL</kbd> spline · <kbd>PO</kbd> point · <kbd>XL</kbd> xline · <kbd>RAY</kbd> · <kbd>REG</kbd> region · <kbd>BO</kbd> boundary · <kbd>H</kbd> hatch<br>
+      <b>Modify:</b> <kbd>M</kbd> move · <kbd>CO</kbd> copy · <kbd>RO</kbd> rotate · <kbd>SC</kbd> scale · <kbd>MI</kbd> mirror · <kbd>S</kbd> stretch · <kbd>TR</kbd> trim · <kbd>EX</kbd> extend · <kbd>BR</kbd> break · <kbd>J</kbd> join · <kbd>F</kbd> fillet · <kbd>CHA</kbd> chamfer · <kbd>O</kbd> offset · <kbd>AR</kbd> array · <kbd>X</kbd> explode · <kbd>E</kbd> erase<br>
+      <b>Other:</b> <kbd>T</kbd> text · <kbd>DLI</kbd> dimension · <kbd>DI</kbd> distance · <kbd>DIV</kbd> divide · <kbd>ME</kbd> measure · <kbd>MA</kbd> match props · <kbd>QSELECT</kbd> · <kbd>U</kbd> undo · <kbd>ZE</kbd> zoom extents · <kbd>PICKBOX 8</kbd><br>
+      <b>3D:</b> <kbd>EXT</kbd> extrude · <kbd>REV</kbd> revolve · <kbd>UNI</kbd> union · <kbd>SU</kbd> subtract · <kbd>IN</kbd> intersect · <kbd>PRESS</kbd> press/pull · <kbd>BOX</kbd> <kbd>CYL</kbd> <kbd>CONE</kbd> <kbd>SPH</kbd><br>
+      <kbd>F3</kbd> snap · <kbd>F4</kbd> osnap · <kbd>F7</kbd> grid · <kbd>F8</kbd> ortho · <kbd>Shift</kbd> hold = ortho<br>
+      Wheel: zoom · Middle-drag: pan · Right-click: Enter · <kbd>Esc</kbd>: cancel<br>
+      Drag left→right = window select, right→left = crossing. Select, then drag blue grips.
     </div>
-    <div class="h3" style="color:var(--dim);line-height:1.8">
-      <kbd>V</kbd> Select · <kbd>O</kbd> Orbit<br>
-      <kbd>B</kbd> Box · <kbd>C</kbd> Cylinder · <kbd>N</kbd> Cone<br>
-      <kbd>S</kbd> Sphere · <kbd>E</kbd> Extrude (from 2D shape)<br>
-      <kbd>M</kbd> Move · <kbd>P</kbd> Copy · <kbd>Del</kbd> Delete<br>
-      Arrows: nudge XY · <kbd>PgUp</kbd>/<kbd>PgDn</kbd>: nudge Z<br>
+    <div class="h3" style="color:var(--dim);line-height:1.75">
+      Type commands: <kbd>BOX</kbd> <kbd>CYL</kbd> <kbd>CONE</kbd> <kbd>SPH</kbd> <kbd>EXT</kbd> <kbd>REV</kbd> <kbd>UNI</kbd> <kbd>SU</kbd> <kbd>IN</kbd> <kbd>PRESS</kbd> <kbd>M</kbd> <kbd>CO</kbd> <kbd>E</kbd><br>
+      Arrows: nudge XY · <kbd>PgUp</kbd>/<kbd>PgDn</kbd>: nudge Z · <kbd>Del</kbd> delete<br>
       <kbd>1</kbd> Top · <kbd>2</kbd> Front · <kbd>3</kbd> Right · <kbd>4</kbd> Iso<br>
-      Right-drag: orbit · Middle-drag: pan · Wheel: zoom<br>
-      Edit sizes, position, rotation and color in Properties.
+      Right-drag: orbit · Middle-drag: pan · Wheel: zoom · <kbd>Enter</kbd>: finish<br>
+      Union/Intersect: select 2+ solids first. Subtract: select the base solid(s), run SU, click the cutters, Enter.
     </div>
   </div>
   <div id="status">
     <span id="coord" style="min-width:170px;font-family:ui-monospace,monospace">X: 0  Y: 0</span>
-    <button id="tGrid" class="on v2">Grid F7</button>
-    <button id="tSnap" class="on v2">Snap F3</button>
-    <button id="tOsnap" class="on v2">OSnap F4</button>
-    <button id="tOrtho" class="v2">Ortho F8</button>
+    <button id="tGrid" class="on v2">Grid</button>
+    <button id="tSnap" class="on v2">Snap</button>
+    <button id="tOsnap" class="on v2">OSnap</button>
+    <button id="tOrtho" class="v2">Ortho</button>
+    <button id="tLwt" class="on v2">LWT</button>
     <span id="msg"></span>
     <span id="zoom" style="color:var(--dim)"></span>
   </div>
 </div>
 
 <script>
+
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
 const cv=$('cv'),ctx=cv.getContext('2d');
 const TAU=Math.PI*2,R2D=180/Math.PI;
 
-/* ---------- Trạng thái ---------- */
-let S={ents:[],layers:[{name:'0',color:'#ffffff',visible:true}],cur:'0',next:1,solids:[]};
+/* ---------- State ---------- */
+let S={ents:[],layers:[{name:'0',color:'#ffffff',visible:true}],cur:'0',next:1,solids:[],curCol:'',curLt:'',curLw:''};
 let view={ox:400,oy:300,s:2};
-let sel=new Set(),tool='select',pts=[];
+let sel=new Set(),tool='select',pts=[],phase=null,pend=null,lastTool='';
 let mouse={sx:0,sy:0,p:{x:0,y:0}};
 let snapHit=null,hist=[],hi=-1,raf=0;
-let spaceDown=false,shiftDown=false,pan=null,drag=null,gripDrag=null,pendingText=null,offTgt=null;
-const opt={grid:true,snap:true,osnap:true,ortho:false};
+let shiftDown=false,pan=null,drag=null,gripDrag=null,pendingText=null,offTgt=null,stretchWin=null;
+const opt={grid:true,snap:true,osnap:true,ortho:false,lwt:true};
+let PB=6,XH=22;
 const hc=new WeakMap();
 const clone=o=>JSON.parse(JSON.stringify(o));
 
@@ -183,6 +219,63 @@ function arc3(p1,p2,p3){
   return cross>0?{c,r,a0:t1,a1:t3}:{c,r,a0:t3,a1:t1};
 }
 
+
+/* extra geometry helpers */
+const unit=(a,b)=>{const l=Math.hypot(b.x-a.x,b.y-a.y)||1;return{x:(b.x-a.x)/l,y:(b.y-a.y)/l};};
+const cross2=(a,b)=>a.x*b.y-a.y*b.x;
+function circPts(c,r,n){const o=[];for(let i=0;i<n;i++)o.push(pt(c,r,i*TAU/n));return o;}
+function arcSamp(e,per){const sw=nrm(e.a1-e.a0)||TAU,n=Math.max(4,Math.ceil(sw/TAU*per)),o=[];for(let i=0;i<=n;i++)o.push(pt(e.c,e.r,e.a0+sw*i/n));return o;}
+function ellPts(e,n){
+  const o=[],a=e.rot||0,co=Math.cos(a),si=Math.sin(a);
+  for(let i=0;i<n;i++){const t=i*TAU/n,x=e.rx*Math.cos(t),y=e.ry*Math.sin(t);o.push({x:e.c.x+x*co-y*si,y:e.c.y+x*si+y*co});}
+  return o;
+}
+function splinePts(P,closed){
+  const n=P.length;if(n<3)return P.map(q=>({x:q.x,y:q.y}));
+  const out=[],g=i=>closed?P[((i%n)+n)%n]:P[Math.max(0,Math.min(n-1,i))],spans=closed?n:n-1;
+  for(let i=0;i<spans;i++){
+    const p0=g(i-1),p1=g(i),p2=g(i+1),p3=g(i+2);
+    for(let k=0;k<12;k++){
+      const t=k/12,t2=t*t,t3=t2*t,f=(a,b,c,d)=>.5*(2*b+(-a+c)*t+(2*a-5*b+4*c-d)*t2+(-a+3*b-3*c+d)*t3);
+      out.push({x:f(p0.x,p1.x,p2.x,p3.x),y:f(p0.y,p1.y,p2.y,p3.y)});
+    }
+  }
+  if(!closed)out.push({x:P[n-1].x,y:P[n-1].y});
+  return out;
+}
+function curveOf(e){
+  if(e.t==='ellipse')return{p:ellPts(e,96),closed:true};
+  if(e.t==='spline')return{p:splinePts(e.p,e.closed),closed:!!e.closed};
+  return{p:[],closed:false};
+}
+function polyDist(P,closed,p){
+  let m=1e18;const n=P.length;
+  for(let i=0;i<n-1;i++)m=Math.min(m,segDist(p,P[i],P[i+1]));
+  if(closed&&n>1)m=Math.min(m,segDist(p,P[n-1],P[0]));
+  return n===1?dist(p,P[0]):m;
+}
+/* path of an entity as a point list (for divide / measure / break) */
+function pathOf(e){
+  if(e.t==='line')return{P:[e.a,e.b],closed:false};
+  if(e.t==='pl')return{P:e.p,closed:!!e.closed};
+  if(e.t==='circle')return{P:circPts(e.c,e.r,720),closed:true};
+  if(e.t==='arc')return{P:arcSamp(e,720),closed:false};
+  if(e.t==='ellipse'||e.t==='spline'){const c=curveOf(e);if(e.t==='ellipse')c.p=ellPts(e,720);return{P:c.p,closed:c.closed};}
+  return null;
+}
+function pathLen(P,closed){let L=0;for(let i=0;i<P.length-1;i++)L+=dist(P[i],P[i+1]);if(closed&&P.length>1)L+=dist(P[P.length-1],P[0]);return L;}
+function pointAtLen(P,closed,s){
+  const Q=closed?[...P,P[0]]:P;let acc=0;
+  for(let i=0;i<Q.length-1;i++){const d=dist(Q[i],Q[i+1]);if(acc+d>=s-1e-12||i===Q.length-2){const t=d?Math.min(1,Math.max(0,(s-acc)/d)):0;return{x:Q[i].x+(Q[i+1].x-Q[i].x)*t,y:Q[i].y+(Q[i+1].y-Q[i].y)*t};}acc+=d;}
+  return{x:Q[0].x,y:Q[0].y};
+}
+function polySegs(P,closed){
+  const o=[];for(let i=0;i<P.length-1;i++)o.push({k:'s',a:P[i],b:P[i+1]});
+  if(closed&&P.length>2)o.push({k:'s',a:P[P.length-1],b:P[0]});return o;
+}
+const sgnArea=P=>{let a=0;for(let i=0;i<P.length;i++){const q=P[(i+1)%P.length];a+=P[i].x*q.y-q.x*P[i].y;}return a/2;};
+const ccw=P=>sgnArea(P)>=0?P.map(q=>({x:q.x,y:q.y})):P.map(q=>({x:q.x,y:q.y})).reverse();
+const cw=P=>sgnArea(P)<=0?P.map(q=>({x:q.x,y:q.y})):P.map(q=>({x:q.x,y:q.y})).reverse();
 /* ---------- Văn bản & kích thước (hình học) ---------- */
 function textBox(e){
   const h=e.h||10,lines=String(e.s).split('\n'),w=Math.max(...lines.map(l=>l.length),1)*h*0.6;
@@ -254,10 +347,12 @@ function hatchSegs(e){
 function polyOf(e){
   if(e.t==='pl'&&e.closed&&e.p.length>=3)return e.p;
   if(e.t==='circle'){const o=[];for(let i=0;i<72;i++)o.push(pt(e.c,e.r,i*TAU/72));return o;}
+  if(e.t==='ellipse')return ellPts(e,96);
+  if(e.t==='spline'&&e.closed&&e.p.length>=3)return splinePts(e.p,true);
   return null;
 }
 
-/* ---------- Khoảng cách / bbox / snap ---------- */
+/* ---------- Distance / bbox / snap ---------- */
 function entDist(e,p){
   if(e.t==='line')return segDist(p,e.a,e.b);
   if(e.t==='pl'){let m=1e18;const n=e.p.length;for(let i=0;i<n-1;i++)m=Math.min(m,segDist(p,e.p[i],e.p[i+1]));if(e.closed&&n>1)m=Math.min(m,segDist(p,e.p[n-1],e.p[0]));return m;}
@@ -267,6 +362,14 @@ function entDist(e,p){
     if(inArc(a,e.a0,e.a1))return Math.abs(dist(p,e.c)-e.r);
     return Math.min(dist(p,pt(e.c,e.r,e.a0)),dist(p,pt(e.c,e.r,e.a1)));
   }
+  if(e.t==='ellipse'||e.t==='spline'){const c=curveOf(e);return polyDist(c.p,c.closed,p);}
+  if(e.t==='point')return dist(p,e.p);
+  if(e.t==='xline'||e.t==='ray'){
+    const dx=Math.cos(e.ang),dy=Math.sin(e.ang),vx=p.x-e.p.x,vy=p.y-e.p.y;
+    if(e.t==='ray'&&vx*dx+vy*dy<0)return Math.hypot(vx,vy);
+    return Math.abs(vx*dy-vy*dx);
+  }
+  if(e.t==='region'){let m=1e18;for(const l of e.loops)m=Math.min(m,polyDist(l,true,p));return m;}
   if(e.t==='text')return textDist(e,p);
   if(e.t==='dim'){
     const d=dimParts(e);let m=1e18;
@@ -286,6 +389,9 @@ function ebox(e){
   else if(e.t==='pl')P=e.p;
   else if(e.t==='circle')return{x0:e.c.x-e.r,x1:e.c.x+e.r,y0:e.c.y-e.r,y1:e.c.y+e.r};
   else if(e.t==='arc'){P=[pt(e.c,e.r,e.a0),pt(e.c,e.r,e.a1)];for(let k=0;k<4;k++){const a=k*Math.PI/2;if(inArc(a,e.a0,e.a1))P.push(pt(e.c,e.r,a));}}
+  else if(e.t==='ellipse'||e.t==='spline')P=curveOf(e).p;
+  else if(e.t==='point'||e.t==='xline'||e.t==='ray')P=[e.p];
+  else if(e.t==='region')P=e.loops.flat();
   else if(e.t==='text')P=textCorners(e);
   else if(e.t==='dim'){const d=dimParts(e);P=[e.a,e.b,e.o];d.lines.forEach(l=>P.push(l[0],l[1]));if(d.text)P.push(...textCorners(d.text));}
   else if(e.t==='hatch')P=e.loops.flat();
@@ -301,18 +407,33 @@ function bboxAll(es){
 function osnaps(e){
   const o=[],mid=(a,b)=>({x:(a.x+b.x)/2,y:(a.y+b.y)/2});
   if(e.t==='line'){o.push({p:e.a,t:'Endpoint'},{p:e.b,t:'Endpoint'},{p:mid(e.a,e.b),t:'Midpoint'});}
-  else if(e.t==='pl'){const n=e.p.length;e.p.forEach(q=>o.push({p:q,t:'Vertex'}));
+  else if(e.t==='pl'){const n=e.p.length;e.p.forEach(q=>o.push({p:q,t:'Endpoint'}));
     for(let i=0;i<n-1;i++)o.push({p:mid(e.p[i],e.p[i+1]),t:'Midpoint'});
     if(e.closed&&n>1)o.push({p:mid(e.p[n-1],e.p[0]),t:'Midpoint'});}
   else if(e.t==='circle'){o.push({p:e.c,t:'Center'});for(let k=0;k<4;k++)o.push({p:pt(e.c,e.r,k*Math.PI/2),t:'Quadrant'});}
-  else if(e.t==='arc'){o.push({p:e.c,t:'Center'},{p:pt(e.c,e.r,e.a0),t:'Endpoint'},{p:pt(e.c,e.r,e.a1),t:'Endpoint'});}
+  else if(e.t==='arc'){o.push({p:e.c,t:'Center'},{p:pt(e.c,e.r,e.a0),t:'Endpoint'},{p:pt(e.c,e.r,e.a1),t:'Endpoint'},{p:pt(e.c,e.r,e.a0+nrm(e.a1-e.a0)/2),t:'Midpoint'});}
+  else if(e.t==='ellipse'){
+    const a=e.rot||0,co=Math.cos(a),si=Math.sin(a);o.push({p:e.c,t:'Center'});
+    [[e.rx,0],[-e.rx,0],[0,e.ry],[0,-e.ry]].forEach(([x,y])=>o.push({p:{x:e.c.x+x*co-y*si,y:e.c.y+x*si+y*co},t:'Quadrant'}));
+  }
+  else if(e.t==='spline'){e.p.forEach(q=>o.push({p:q,t:'Endpoint'}));}
+  else if(e.t==='point'){o.push({p:e.p,t:'Node'});}
+  else if(e.t==='xline'||e.t==='ray'){o.push({p:e.p,t:'Endpoint'});}
+  else if(e.t==='region'){e.loops.forEach(l=>l.forEach(q=>o.push({p:q,t:'Endpoint'})));}
   else if(e.t==='text'){o.push({p:e.p,t:'Insert'});}
   else if(e.t==='dim'){o.push({p:e.a,t:'Measure'},{p:e.b,t:'Measure'});}
   return o;
 }
-
-/* ---------- Biến đổi ---------- */
-function xform(e,f,da,mir){
+function loopsOf(e){
+  if(e.t==='region')return e.loops;
+  if(e.t==='pl'&&e.closed&&e.p.length>=3)return[e.p];
+  if(e.t==='circle')return[circPts(e.c,e.r,96)];
+  if(e.t==='ellipse')return[ellPts(e,96)];
+  if(e.t==='spline'&&e.closed&&e.p.length>=3)return[splinePts(e.p,true)];
+  return null;
+}
+/* ---------- Transform ---------- */
+function xform(e,f,da,mir,k){
   const n=clone(e);
   switch(n.t){
     case 'line':n.a=f(n.a);n.b=f(n.b);break;
@@ -323,6 +444,17 @@ function xform(e,f,da,mir){
     case 'text':n.p=f(n.p);if(mir===undefined)n.rot=(n.rot||0)+da;break;
     case 'dim':n.a=f(n.a);n.b=f(n.b);n.o=f(n.o);if(mir===undefined&&Math.abs(da)>1e-9)n.m='a';break;
     case 'hatch':n.loops=n.loops.map(l=>l.map(f));n.ang=mir===undefined?(n.ang||0)+da*R2D:2*mir*R2D-(n.ang||0);break;
+    case 'ellipse':n.c=f(n.c);n.rot=mir===undefined?(n.rot||0)+da:2*mir-(n.rot||0);break;
+    case 'spline':n.p=n.p.map(f);break;
+    case 'point':n.p=f(n.p);break;
+    case 'xline':case 'ray':n.p=f(n.p);n.ang=mir===undefined?n.ang+da:2*mir-n.ang;break;
+    case 'region':n.loops=n.loops.map(l=>l.map(f));break;
+  }
+  if(k){
+    if(n.t==='circle'||n.t==='arc')n.r*=k;
+    else if(n.t==='ellipse'){n.rx*=k;n.ry*=k;}
+    else if(n.t==='text'||n.t==='dim')n.h*=k;
+    else if(n.t==='hatch')n.sp*=k;
   }
   return n;
 }
@@ -330,7 +462,21 @@ function mirrorF(A,B){
   const L=dist(A,B)||1e-9,ux=(B.x-A.x)/L,uy=(B.y-A.y)/L;
   return{th:Math.atan2(uy,ux),f:p=>{const vx=p.x-A.x,vy=p.y-A.y,d=vx*ux+vy*uy;return{x:A.x+2*d*ux-vx,y:A.y+2*d*uy-vy};}};
 }
-
+/* stretch: move only the points that lie inside the crossing window */
+function stretchEnt(e,w,dx,dy){
+  const inW=q=>q.x>=w.x0-1e-9&&q.x<=w.x1+1e-9&&q.y>=w.y0-1e-9&&q.y<=w.y1+1e-9;
+  const mv=q=>({x:q.x+dx,y:q.y+dy}),n=clone(e);let hit=false;
+  const P=q=>{if(inW(q)){hit=true;return mv(q);}return{x:q.x,y:q.y};};
+  switch(n.t){
+    case 'line':n.a=P(n.a);n.b=P(n.b);break;
+    case 'pl':case 'spline':n.p=n.p.map(P);break;
+    case 'circle':case 'arc':case 'ellipse':n.c=P(n.c);break;
+    case 'text':case 'point':case 'xline':case 'ray':n.p=P(n.p);break;
+    case 'dim':n.a=P(n.a);n.b=P(n.b);n.o=P(n.o);break;
+    case 'hatch':case 'region':n.loops=n.loops.map(l=>l.map(P));break;
+  }
+  return hit?n:null;
+}
 /* ---------- Giao điểm / Trim / Offset ---------- */
 function explode(e){
   const o=[],n=e.p.length;
@@ -343,6 +489,10 @@ function prims(e){
   if(e.t==='pl')return explode(e).map(s=>({k:'s',a:s.a,b:s.b}));
   if(e.t==='circle')return[{k:'c',c:e.c,r:e.r,full:true}];
   if(e.t==='arc')return[{k:'c',c:e.c,r:e.r,a0:e.a0,a1:e.a1}];
+  if(e.t==='ellipse'||e.t==='spline'){const c=curveOf(e);return polySegs(c.p,c.closed);}
+  if(e.t==='xline'){const L=1e6,dx=Math.cos(e.ang),dy=Math.sin(e.ang);return[{k:'s',a:{x:e.p.x-dx*L,y:e.p.y-dy*L},b:{x:e.p.x+dx*L,y:e.p.y+dy*L}}];}
+  if(e.t==='ray'){const L=1e6,dx=Math.cos(e.ang),dy=Math.sin(e.ang);return[{k:'s',a:{x:e.p.x,y:e.p.y},b:{x:e.p.x+dx*L,y:e.p.y+dy*L}}];}
+  if(e.t==='region')return e.loops.flatMap(l=>polySegs(l,true));
   return[];
 }
 function segSeg(A,B){
@@ -415,7 +565,7 @@ function trimPrim(tgt,p,others){
   return out;
 }
 function trimAt(e,p){
-  let others=visEnts().filter(x=>x.id!==e.id&&['line','pl','circle','arc'].includes(x.t));
+  let others=visEnts().filter(x=>x.id!==e.id&&prims(x).length);
   let tgt=e;const keep=[];
   if(e.t==='pl'){
     const segs=explode(e);let bi=0,bd=1e18;
@@ -427,7 +577,7 @@ function trimAt(e,p){
   const res=trimPrim(tgt,p,others);
   if(!res)return false;
   S.ents=S.ents.filter(x=>x.id!==e.id);
-  for(const n of[...keep.map(k=>({...k})),...res]){n.layer=e.layer;n.id=S.next++;S.ents.push(n);}
+  for(const n of[...keep.map(k=>({...k})),...res]){inherit(n,e);n.id=S.next++;S.ents.push(n);}
   return true;
 }
 function lineInter(p1,p2,p3,p4){
@@ -443,6 +593,7 @@ function offsetLine(a,b,d,sg){
   return{a:{x:a.x+nx,y:a.y+ny},b:{x:b.x+nx,y:b.y+ny}};
 }
 function offsetEnt(e,d,p){
+  if(e.t==='xline'){const dx=Math.cos(e.ang),dy=Math.sin(e.ang),sg=((p.x-e.p.x)*(-dy)+(p.y-e.p.y)*dx)>=0?1:-1;return{t:'xline',p:{x:e.p.x-dy*d*sg,y:e.p.y+dx*d*sg},ang:e.ang,layer:e.layer};}
   if(e.t==='line'){const o=offsetLine(e.a,e.b,d,sideSign(e.a,e.b,p));return o?{t:'line',a:o.a,b:o.b,layer:e.layer}:null;}
   if(e.t==='circle'||e.t==='arc'){const r=e.r+(dist(p,e.c)>e.r?d:-d);if(r<=1e-9)return null;const n=clone(e);delete n.id;n.r=r;return n;}
   if(e.t==='pl'){
@@ -465,29 +616,215 @@ function offsetEnt(e,d,p){
   return null;
 }
 
-/* ---------- Layer / lịch sử ---------- */
+
+/* ---------- Boundary / regions / triangulation with holes ---------- */
+function boundaryAt(p){
+  const segs=[];
+  const addPoly=(P,closed)=>{for(let i=0;i<P.length-1;i++)segs.push([P[i],P[i+1]]);if(closed&&P.length>2)segs.push([P[P.length-1],P[0]]);};
+  for(const e of visEnts()){
+    if(e.t==='line')segs.push([e.a,e.b]);
+    else if(e.t==='pl')addPoly(e.p,e.closed);
+    else if(e.t==='circle')addPoly(circPts(e.c,e.r,96),true);
+    else if(e.t==='arc')addPoly(arcSamp(e,96),false);
+    else if(e.t==='ellipse'||e.t==='spline'){const c=curveOf(e);addPoly(c.p,c.closed);}
+    else if(e.t==='region')e.loops.forEach(l=>addPoly(l,true));
+  }
+  const n=segs.length;if(!n)return null;
+  if(n>5000){setMsg('Drawing is too complex for boundary detection.');return null;}
+  let x0=1e18,x1=-1e18,y0=1e18,y1=-1e18;
+  for(const[a,b]of segs){x0=Math.min(x0,a.x,b.x);x1=Math.max(x1,a.x,b.x);y0=Math.min(y0,a.y,b.y);y1=Math.max(y1,a.y,b.y);}
+  const diag=Math.hypot(x1-x0,y1-y0)||1,TOL=diag*1e-9,GR=diag*1e-7;
+  const bb=segs.map(([a,b])=>[Math.min(a.x,b.x)-TOL,Math.max(a.x,b.x)+TOL,Math.min(a.y,b.y)-TOL,Math.max(a.y,b.y)+TOL]);
+  const spl=segs.map(()=>[]);
+  const par=(a,b,q)=>{const dx=b.x-a.x,dy=b.y-a.y,l=dx*dx+dy*dy;return l?((q.x-a.x)*dx+(q.y-a.y)*dy)/l:0;};
+  for(let i=0;i<n;i++){
+    const[a,b]=segs[i];
+    for(let j=i+1;j<n;j++){
+      if(bb[i][1]<bb[j][0]||bb[j][1]<bb[i][0]||bb[i][3]<bb[j][2]||bb[j][3]<bb[i][2])continue;
+      const[c,d]=segs[j];
+      const X=segSeg({a,b},{a:c,b:d});
+      if(X.length){spl[i].push(par(a,b,X[0]));spl[j].push(par(c,d,X[0]));}
+      for(const q of[c,d])if(segDist(q,a,b)<=TOL*50)spl[i].push(par(a,b,q));
+      for(const q of[a,b])if(segDist(q,c,d)<=TOL*50)spl[j].push(par(c,d,q));
+    }
+  }
+  const vid=new Map(),V=[];
+  const vk=q=>Math.round(q.x/GR)+','+Math.round(q.y/GR);
+  const getV=q=>{const k=vk(q);let i=vid.get(k);if(i===undefined){i=V.length;V.push({x:q.x,y:q.y});vid.set(k,i);}return i;};
+  const E=new Set(),edges=[];
+  for(let i=0;i<n;i++){
+    const[a,b]=segs[i];
+    const ts=[0,...spl[i].filter(t=>t>1e-12&&t<1-1e-12).sort((u,v)=>u-v),1];
+    let prev=getV(a);
+    for(let k=1;k<ts.length;k++){
+      const q=k===ts.length-1?b:{x:a.x+(b.x-a.x)*ts[k],y:a.y+(b.y-a.y)*ts[k]},cur=getV(q);
+      if(cur!==prev){const key=prev<cur?prev+'_'+cur:cur+'_'+prev;if(!E.has(key)){E.add(key);edges.push([prev,cur]);}}
+      prev=cur;
+    }
+  }
+  // remove dangling edges
+  const deg=new Array(V.length).fill(0);edges.forEach(([a,b])=>{deg[a]++;deg[b]++;});
+  let alive=edges.map(()=>true),changed=true;
+  while(changed){changed=false;
+    edges.forEach((e,i)=>{if(alive[i]&&(deg[e[0]]<=1||deg[e[1]]<=1)){alive[i]=false;deg[e[0]]--;deg[e[1]]--;changed=true;}});}
+  const nb=V.map(()=>[]);
+  edges.forEach((e,i)=>{if(!alive[i])return;const[a,b]=e;
+    nb[a].push({to:b,ang:Math.atan2(V[b].y-V[a].y,V[b].x-V[a].x)});nb[b].push({to:a,ang:Math.atan2(V[a].y-V[b].y,V[a].x-V[b].x)});});
+  nb.forEach(l=>l.sort((u,v)=>u.ang-v.ang));
+  // components
+  const uf=V.map((_,i)=>i),fd=i=>{while(uf[i]!==i){uf[i]=uf[uf[i]];i=uf[i];}return i;};
+  edges.forEach((e,i)=>{if(alive[i])uf[fd(e[0])]=fd(e[1]);});
+  const seen=new Set(),faces=[];
+  for(let u=0;u<V.length;u++)for(const h of nb[u]){
+    const key=u+'>'+h.to;if(seen.has(key))continue;
+    const cyc=[];let a=u,b=h.to,guard=0;
+    while(!seen.has(a+'>'+b)&&guard++<200000){
+      seen.add(a+'>'+b);cyc.push(a);
+      const L=nb[b];let idx=L.findIndex(x=>x.to===a);
+      const nx=L[(idx-1+L.length)%L.length];a=b;b=nx.to;
+    }
+    if(cyc.length>=3){const poly=cyc.map(i=>V[i]);faces.push({cyc,poly,area:sgnArea(poly),comp:fd(cyc[0])});}
+  }
+  const bounded=faces.filter(f=>f.area>1e-12&&pip(p,f.poly));
+  if(!bounded.length)return null;
+  bounded.sort((u,v)=>u.area-v.area);
+  const F=bounded[0];
+  let holes=faces.filter(f=>f.area<-1e-12&&f.comp!==F.comp&&pip(f.poly[0],F.poly));
+  holes=holes.filter((h,i)=>!holes.some((k,j)=>j!==i&&pip(h.poly[0],k.poly)));
+  return{outer:ccw(F.poly),holes:holes.map(h=>cw(h.poly))};
+}
+/* group closed shapes into regions: nested shapes become holes (even-odd) */
+function buildRegions(shapes){
+  // shapes: [{poly}] ; returns [{outer,holes}]
+  const S2=shapes.map(s=>({poly:s.poly,a:area(s.poly)})).sort((u,v)=>v.a-u.a);
+  const inside=(x,y)=>y.a>x.a&&x.poly.every(q=>pip(q,y.poly)||segDist(q,y.poly[0],y.poly[0])<1e-12);
+  S2.forEach(s=>{s.par=null;for(let i=S2.indexOf(s)-1;i>=0;i--){if(inside(s,S2[i])){if(!s.par||S2[i].a<s.par.a)s.par=S2[i];}}});
+  const depth=s=>{let d=0,q=s.par;while(q){d++;q=q.par;}return d;};
+  const out=[];
+  S2.forEach(s=>{if(depth(s)%2===0)out.push({outer:ccw(s.poly),holes:S2.filter(h=>h.par===s).map(h=>cw(h.poly))});});
+  return out;
+}
+function earcut2(P,ring){
+  const idx=ring.slice(),out=[];
+  const cr=(a,b,c)=>(P[b].x-P[a].x)*(P[c].y-P[a].y)-(P[b].y-P[a].y)*(P[c].x-P[a].x);
+  const same=(i,j)=>i===j||(Math.abs(P[i].x-P[j].x)<1e-12&&Math.abs(P[i].y-P[j].y)<1e-12);
+  let guard=0;
+  while(idx.length>3&&guard++<50000){
+    let cut=false;
+    for(let k=0;k<idx.length&&!cut;k++){
+      const a=idx[(k+idx.length-1)%idx.length],b=idx[k],c=idx[(k+1)%idx.length];
+      if(cr(a,b,c)<=1e-12)continue;
+      let ok=true;
+      for(const j of idx){
+        if(same(j,a)||same(j,b)||same(j,c))continue;
+        if(cr(a,b,j)>=-1e-12&&cr(b,c,j)>=-1e-12&&cr(c,a,j)>=-1e-12){ok=false;break;}
+      }
+      if(!ok)continue;
+      out.push([a,b,c]);idx.splice(k,1);cut=true;
+    }
+    if(!cut){
+      let rm=-1;
+      for(let k=0;k<idx.length;k++){const a=idx[(k+idx.length-1)%idx.length],b=idx[k],c=idx[(k+1)%idx.length];if(Math.abs(cr(a,b,c))<=1e-12){rm=k;break;}}
+      if(rm<0)break;
+      idx.splice(rm,1);
+    }
+  }
+  if(idx.length===3&&Math.abs(cr(idx[0],idx[1],idx[2]))>1e-12)out.push(idx.slice());
+  return out;
+}
+function segsCross(p,q,a,b){
+  const o=(u,v,w)=>(v.x-u.x)*(w.y-u.y)-(v.y-u.y)*(w.x-u.x);
+  const d1=o(p,q,a),d2=o(p,q,b),d3=o(a,b,p),d4=o(a,b,q),e=1e-12;
+  return((d1>e&&d2<-e)||(d1<-e&&d2>e))&&((d3>e&&d4<-e)||(d3<-e&&d4>e));
+}
+/* triangulate polygon with holes (outer CCW, holes CW). Returns {P,tris} with P = outer..., hole1..., */
+function triHoles(outer,holes){
+  const P=[...outer],off=[0];
+  holes.forEach(h=>{off.push(P.length);P.push(...h);});
+  let ring=outer.map((_,i)=>i);
+  const loops=[outer,...holes];
+  const H=holes.map((h,hi)=>{let m=0;for(let i=1;i<h.length;i++)if(h[i].x>h[m].x)m=i;return{hi,m,x:h[m].x};}).sort((u,v)=>v.x-u.x);
+  for(const{hi,m}of H){
+    const h=holes[hi],o=off[hi+1],M=P[o+m];
+    const cand=ring.map((v,i)=>({v,i,d:dist(P[v],M)})).sort((u,v)=>u.d-v.d);
+    let pick=null;
+    for(const c of cand){
+      const Q=P[c.v];
+      if(dist(Q,M)<1e-12)continue;
+      let bad=false;
+      for(const L of loops){
+        for(let i=0;i<L.length&&!bad;i++){const a=L[i],b=L[(i+1)%L.length];
+          if(dist(a,Q)<1e-12||dist(b,Q)<1e-12||dist(a,M)<1e-12||dist(b,M)<1e-12)continue;
+          if(segsCross(Q,M,a,b))bad=true;}
+        if(bad)break;
+      }
+      if(bad)continue;
+      const mid={x:(Q.x+M.x)/2,y:(Q.y+M.y)/2};
+      if(!pip(mid,outer)||holes.some(hh=>pip(mid,hh)))continue;
+      pick=c;break;
+    }
+    if(!pick)pick=cand[0];
+    const hr=[];for(let t=0;t<=h.length;t++)hr.push(o+(m+t)%h.length);
+    ring=[...ring.slice(0,pick.i+1),...hr,pick.v,...ring.slice(pick.i+1)];
+  }
+  return{P,tris:earcut2(P,ring)};
+}
+/* ---------- Layers / history / properties ---------- */
+const LT={continuous:[],dashed:[10,6],hidden:[5,4],center:[18,4,4,4],phantom:[18,4,4,4,4,4],dot:[1.5,5],dashdot:[10,4,2,4]};
+const LTN={continuous:'Continuous',dashed:'Dashed',hidden:'Hidden',center:'Center',phantom:'Phantom',dot:'Dot',dashdot:'Dash-dot'};
+const LWS=[0.13,0.18,0.25,0.35,0.5,0.7,1,1.4];
+const PCOLS=[['#ff0000','Red'],['#ffff00','Yellow'],['#00ff00','Green'],['#00ffff','Cyan'],['#4d79ff','Blue'],['#ff00ff','Magenta'],['#ffffff','White'],['#ff8c00','Orange'],['#808080','Gray']];
 const layerOf=name=>S.layers.find(l=>l.name===name)||S.layers[0];
-const visEnts=()=>S.ents.filter(e=>layerOf(e.layer).visible);
+const visEnts=()=>S.ents.filter(e=>{const l=layerOf(e.layer);return l.visible&&!l.frozen;});
+const unlocked=e=>!layerOf(e.layer).locked;
+const pickable=()=>visEnts().filter(unlocked);
 const selEnts=()=>S.ents.filter(e=>sel.has(e.id));
-function snapshot(){return JSON.stringify({ents:S.ents,layers:S.layers,solids:S.solids,cur:S.cur,next:S.next});}
+const effCol=e=>e.col||layerOf(e.layer).color;
+const effLt=e=>e.lt||layerOf(e.layer).lt||'continuous';
+const effLw=e=>(e.lw!=null?e.lw:(layerOf(e.layer).lw!=null?layerOf(e.layer).lw:0.25));
+const dashOf=e=>LT[effLt(e)]||[];
+const lwPx=e=>opt.lwt?Math.max(1,1+(effLw(e)-0.13)*5):1;
+function inherit(n,e){n.layer=e.layer;['col','lt','lw'].forEach(k=>{if(e[k]!=null&&e[k]!=='')n[k]=e[k];else delete n[k];});return n;}
+function snapshot(){return JSON.stringify({ents:S.ents,layers:S.layers,solids:S.solids,cur:S.cur,next:S.next,curCol:S.curCol,curLt:S.curLt,curLw:S.curLw});}
 function save(){try{localStorage.setItem('minicad2d',snapshot());}catch(_){}}
 function commit(){hist=hist.slice(0,hi+1);hist.push(snapshot());if(hist.length>200)hist.shift();hi=hist.length-1;save();refreshUI();}
 function restore(str){S.solids=[];Object.assign(S,JSON.parse(str));sel=new Set([...sel].filter(id=>S.ents.some(e=>e.id===id)));sel3=new Set([...sel3].filter(id=>S.solids.some(s=>s.id===id)));refreshUI();}
 function undo(){if(hi>0){hi--;restore(hist[hi]);save();}else setMsg('Nothing to undo.');}
 function redo(){if(hi<hist.length-1){hi++;restore(hist[hi]);save();}}
-function addEnt(e){e.id=S.next++;e.layer=S.cur;S.ents.push(e);}
+function addEnt(e){
+  e.id=S.next++;e.layer=S.cur;
+  if(S.curCol)e.col=S.curCol;if(S.curLt)e.lt=S.curLt;if(S.curLw!==''&&S.curLw!=null)e.lw=+S.curLw;
+  S.ents.push(e);return e;
+}
 
-/* ---------- Tọa độ ---------- */
+/* ---------- Coordinates / snapping ---------- */
 const w2s=p=>({x:p.x*view.s+view.ox,y:-p.y*view.s+view.oy});
 const s2w=(x,y)=>({x:(x-view.ox)/view.s,y:-(y-view.oy)/view.s});
 const rawP=()=>s2w(mouse.sx,mouse.sy);
 function gridStep(){const raw=14/view.s,p=Math.pow(10,Math.floor(Math.log10(raw)));for(const m of[1,2,5,10])if(m*p>=raw)return m*p;return 10*p;}
-const drawingTool=()=>['line','pl','rect','circle','arc','measure','move','copy','rotate','mirror','dim'].includes(tool);
+const DRAWTOOLS=['line','pl','rect','polygon','circle','circle2','circle3','arc','arcsce','ellipse','ellipsec','spline','point','xline','ray','dist','move','copy','rotate','scale','mirror','stretch','dim','break','arrayp'];
+const drawingTool=()=>DRAWTOOLS.includes(tool)&&!phase;
+function nearPrim(P,raw,R){return P.k==='s'?segDist(raw,P.a,P.b)<R:Math.abs(dist(raw,P.c)-P.r)<R;}
+function nearInter(raw,tol){
+  const R=tol*4,cand=[];
+  for(const e of visEnts()){if(entDist(e,raw)<R&&prims(e).length){cand.push(e);if(cand.length>12)break;}}
+  let best=null,bd=tol;
+  for(let i=0;i<cand.length;i++){
+    const A=prims(cand[i]).filter(x=>nearPrim(x,raw,R));
+    for(let j=i+1;j<cand.length;j++){
+      const B=prims(cand[j]).filter(x=>nearPrim(x,raw,R));
+      for(const a of A)for(const b of B)for(const q of interPP(a,b)){const d=dist(q,raw);if(d<bd){bd=d;best=q;}}
+    }
+  }
+  return best;
+}
 function computeP(sx,sy){
   const raw=s2w(sx,sy);let p=raw;snapHit=null;
   if(opt.osnap){
     let best=null,bd=12/view.s;
     for(const e of visEnts())for(const o of osnaps(e)){const d=dist(o.p,raw);if(d<bd){bd=d;best=o;}}
+    const ip=nearInter(raw,bd);
+    if(ip&&(!best||dist(ip,raw)<bd))best={p:ip,t:'Intersection'};
     if(best){snapHit=best;return{x:best.p.x,y:best.p.y};}
   }
   if(opt.snap){const g=gridStep();p={x:Math.round(raw.x/g)*g,y:Math.round(raw.y/g)*g};}
@@ -498,14 +835,22 @@ function computeP(sx,sy){
   return p;
 }
 
-/* ---------- Vẽ ---------- */
-const isStroke=e=>e.t==='line'||e.t==='pl'||e.t==='circle'||e.t==='arc';
+/* ---------- Drawing ---------- */
+const STROKES=['line','pl','circle','arc','ellipse','spline','xline','ray','region'];
+const isStroke=e=>STROKES.includes(e.t);
+function pathPts(P,closed){P.forEach((q,i)=>{const s=w2s(q);i?ctx.lineTo(s.x,s.y):ctx.moveTo(s.x,s.y);});if(closed)ctx.closePath();}
 function path(e){
   ctx.beginPath();
   if(e.t==='line'){const a=w2s(e.a),b=w2s(e.b);ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);}
-  else if(e.t==='pl'){e.p.forEach((q,i)=>{const s=w2s(q);i?ctx.lineTo(s.x,s.y):ctx.moveTo(s.x,s.y);});if(e.closed)ctx.closePath();}
+  else if(e.t==='pl')pathPts(e.p,e.closed);
   else if(e.t==='circle'){const c=w2s(e.c);ctx.arc(c.x,c.y,Math.max(e.r*view.s,0.01),0,TAU);}
-  else{const c=w2s(e.c);ctx.arc(c.x,c.y,Math.max(e.r*view.s,0.01),-e.a0,-e.a1,true);}
+  else if(e.t==='arc'){const c=w2s(e.c);ctx.arc(c.x,c.y,Math.max(e.r*view.s,0.01),-e.a0,-e.a1,true);}
+  else if(e.t==='ellipse'||e.t==='spline'){const c=curveOf(e);pathPts(c.p,c.closed);}
+  else if(e.t==='xline'||e.t==='ray'){
+    const L=(cv.clientWidth+cv.clientHeight)*4,s0=w2s(e.p),dx=Math.cos(e.ang),dy=-Math.sin(e.ang);
+    ctx.moveTo(e.t==='ray'?s0.x:s0.x-dx*L,e.t==='ray'?s0.y:s0.y-dy*L);ctx.lineTo(s0.x+dx*L,s0.y+dy*L);
+  }
+  else if(e.t==='region'){for(const l of e.loops)pathPts(l,true);}
 }
 function drawText(t,col){
   const px=t.h*view.s;if(px<3)return;
@@ -517,7 +862,14 @@ function drawText(t,col){
 }
 function drawEnt(e,col,lw){
   ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=lw;
+  if(e.t==='region'){
+    path(e);const a=ctx.globalAlpha;ctx.globalAlpha=a*.16;ctx.fill('evenodd');ctx.globalAlpha=a;ctx.stroke();return;
+  }
   if(isStroke(e)){path(e);ctx.stroke();return;}
+  if(e.t==='point'){
+    const s=w2s(e.p);ctx.beginPath();ctx.arc(s.x,s.y,2.2,0,TAU);ctx.fill();
+    ctx.beginPath();ctx.moveTo(s.x-6,s.y);ctx.lineTo(s.x+6,s.y);ctx.moveTo(s.x,s.y-6);ctx.lineTo(s.x,s.y+6);ctx.lineWidth=1;ctx.stroke();return;
+  }
   if(e.t==='text'){drawText(e,col);return;}
   if(e.t==='dim'){
     const d=dimParts(e);ctx.beginPath();
@@ -538,8 +890,9 @@ function drawEnt(e,col,lw){
   }
 }
 function redraw(){if(!raf)raf=requestAnimationFrame(()=>{raf=0;render();});}
+const PICKTOOLS=['select','trim','extend','offset','break','fillet','chamfer','match','divide','meas','hatch','boundary','ptonobj'];
 function render(){
-  if(mode==='3d'){render3d();return;}
+  if(mode==='3d'){render3d();updPrompt();return;}
   const W=cv.clientWidth,H=cv.clientHeight;
   ctx.fillStyle='#1b1d22';ctx.fillRect(0,0,W,H);
   const tl=s2w(0,0),br=s2w(W,H);
@@ -553,88 +906,151 @@ function render(){
   ctx.strokeStyle='#3b7a4a';ctx.beginPath();ctx.moveTo(Math.round(view.ox)+.5,0);ctx.lineTo(Math.round(view.ox)+.5,H);ctx.stroke();
   ctx.lineJoin='round';ctx.lineCap='round';
   const ents=visEnts();
-  for(const e of ents)if(e.t==='hatch')drawEnt(e,sel.has(e.id)?'#4da3ff':layerOf(e.layer).color,1);
+  for(const e of ents)if(e.t==='hatch'){ctx.globalAlpha=layerOf(e.layer).locked?.5:1;drawEnt(e,sel.has(e.id)?'#4da3ff':effCol(e),1);}
+  ctx.globalAlpha=1;
   for(const e of ents){
     if(e.t==='hatch')continue;
-    const sl=sel.has(e.id);
-    if(sl&&isStroke(e))drawEnt(e,'#4da3ff',3);
-    drawEnt(e,sl&&!isStroke(e)?'#4da3ff':layerOf(e.layer).color,1.5);
+    const sl=sel.has(e.id),lw=lwPx(e),st=isStroke(e);
+    ctx.globalAlpha=layerOf(e.layer).locked?.5:1;
+    if(sl&&st){ctx.setLineDash([]);drawEnt(e,'#4da3ff',lw+2.5);}
+    ctx.setLineDash(st?dashOf(e).map(v=>v):[]);
+    drawEnt(e,sl&&!st?'#4da3ff':effCol(e),lw);
+    ctx.setLineDash([]);
   }
-  // grip
+  ctx.globalAlpha=1;
+  if(pend&&pend.id){const pe=S.ents.find(x=>x.id===pend.id);if(pe)drawEnt(pe,'#ffd24d',3);}
+  // grips
   if(tool==='select'&&sel.size&&sel.size<=50){
     ctx.fillStyle='#4da3ff';ctx.strokeStyle='#fff';ctx.lineWidth=1;
     for(const e of selEnts())for(const g of grips(e)){const s=w2s(g.p);ctx.fillRect(s.x-4,s.y-4,8,8);ctx.strokeRect(s.x-4,s.y-4,8,8);}
   }
-  // xem trước
+  // preview
   ctx.setLineDash([6,4]);
   for(const e of previewEnts())drawEnt(e,'#ffd24d',1.2);
   ctx.setLineDash([]);
   if(drag&&drag.moved){
-    const x=Math.min(drag.x0,drag.x1),y=Math.min(drag.y0,drag.y1),w=Math.abs(drag.x1-drag.x0),h=Math.abs(drag.y1-drag.y0),cr=drag.x1<drag.x0;
+    const x=Math.min(drag.x0,drag.x1),y=Math.min(drag.y0,drag.y1),w=Math.abs(drag.x1-drag.x0),h=Math.abs(drag.y1-drag.y0),cr=drag.x1<drag.x0||phase==='win';
     ctx.fillStyle=cr?'rgba(80,200,120,.12)':'rgba(77,163,255,.12)';ctx.strokeStyle=cr?'#50c878':'#4da3ff';ctx.setLineDash(cr?[5,3]:[]);
     ctx.fillRect(x,y,w,h);ctx.strokeRect(x+.5,y+.5,w,h);ctx.setLineDash([]);
   }
   const m=w2s(mouse.p);
   if(snapHit){
-    ctx.strokeStyle='#ffd24d';ctx.lineWidth=2;ctx.strokeRect(m.x-6,m.y-6,12,12);
+    ctx.strokeStyle='#ffd24d';ctx.lineWidth=2;
+    if(snapHit.t==='Intersection'){ctx.beginPath();ctx.moveTo(m.x-6,m.y-6);ctx.lineTo(m.x+6,m.y+6);ctx.moveTo(m.x+6,m.y-6);ctx.lineTo(m.x-6,m.y+6);ctx.stroke();}
+    else ctx.strokeRect(m.x-6,m.y-6,12,12);
     ctx.fillStyle='#ffd24d';ctx.font='11px system-ui';ctx.fillText(snapHit.t,m.x+10,m.y-10);
   }
-  ctx.strokeStyle='rgba(255,255,255,.55)';ctx.lineWidth=1;
-  ctx.beginPath();ctx.moveTo(m.x-10,m.y);ctx.lineTo(m.x+10,m.y);ctx.moveTo(m.x,m.y-10);ctx.lineTo(m.x,m.y+10);ctx.stroke();
+  // crosshair and pickbox
+  ctx.strokeStyle='rgba(255,255,255,.7)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(m.x-XH,m.y);ctx.lineTo(m.x+XH,m.y);ctx.moveTo(m.x,m.y-XH);ctx.lineTo(m.x,m.y+XH);ctx.stroke();
+  if(PICKTOOLS.includes(tool)||phase==='sel'||phase==='win'){
+    ctx.strokeStyle='#fff';ctx.strokeRect(mouse.sx-PB+.5,mouse.sy-PB+.5,2*PB,2*PB);
+  }
   const hud=hudText();
   if(hud){ctx.font='12px ui-monospace,monospace';const w=ctx.measureText(hud).width+10;
     ctx.fillStyle='rgba(0,0,0,.7)';ctx.fillRect(m.x+14,m.y+14,w,20);ctx.fillStyle='#fff';ctx.fillText(hud,m.x+19,m.y+28);}
   $('zoom').textContent='Zoom '+fmt(view.s*100)+'%';
+  updPrompt();
+}
+/* helpers for shape construction */
+function polyPts(c,p,n,circum){
+  const r=dist(c,p),a=Math.atan2(p.y-c.y,p.x-c.x),R=circum?r/Math.cos(Math.PI/n):r,a0=circum?a-Math.PI/n:a,o=[];
+  for(let i=0;i<n;i++)o.push(pt(c,R,a0+i*TAU/n));
+  return o;
+}
+function ellAxis(e1,e2,m){
+  const c={x:(e1.x+e2.x)/2,y:(e1.y+e2.y)/2},rx=dist(e1,e2)/2,rot=Math.atan2(e2.y-e1.y,e2.x-e1.x);
+  const ry=Math.abs((m.x-c.x)*(-Math.sin(rot))+(m.y-c.y)*Math.cos(rot));
+  return rx>1e-9&&ry>1e-9?{t:'ellipse',c,rx,ry,rot}:null;
+}
+function ellCenter(c,e1,m){return ellAxis({x:2*c.x-e1.x,y:2*c.y-e1.y},e1,m);}
+function circ2(a,b){return{t:'circle',c:{x:(a.x+b.x)/2,y:(a.y+b.y)/2},r:dist(a,b)/2};}
+function circ3(a,b,c){const g=arc3(a,b,c);return g?{t:'circle',c:g.c,r:g.r}:null;}
+function arcSCE(s,c,e){
+  const r=dist(c,s);if(r<1e-9)return null;
+  return{t:'arc',c:{x:c.x,y:c.y},r,a0:Math.atan2(s.y-c.y,s.x-c.x),a1:Math.atan2(e.y-c.y,e.x-c.x)};
 }
 function previewEnts(){
-  const m=tool==='offset'||tool==='trim'||tool==='hatch'?rawP():mouse.p,out=[];
+  const m=['offset','trim','extend','hatch','boundary','break'].includes(tool)?rawP():mouse.p,out=[];
   if(tool==='offset'&&offTgt){
     const e=S.ents.find(x=>x.id===offTgt);
     if(e){out.push(e);const o=offsetEnt(e,offD(),m);if(o)out.push(o);}
     return out;
   }
+  if(tool==='stretch'&&pts.length===1&&stretchWin){
+    const dx=m.x-pts[0].x,dy=m.y-pts[0].y;
+    selEnts().forEach(e=>{const n=stretchEnt(e,stretchWin,dx,dy);if(n)out.push(n);});out.push({t:'line',a:pts[0],b:m});return out;
+  }
   if(!pts.length)return out;
+  const add=e=>{if(e)out.push(e);};
   switch(tool){
     case 'line':out.push({t:'line',a:pts[0],b:m});break;
     case 'pl':out.push({t:'pl',p:[...pts,m],closed:false});break;
     case 'rect':out.push({t:'pl',p:rectPts(pts[0],m),closed:true});break;
+    case 'polygon':if(dist(pts[0],m)>1e-9)out.push({t:'pl',p:polyPts(pts[0],m,polyN(),polyCirc()),closed:true});break;
     case 'circle':out.push({t:'circle',c:pts[0],r:dist(pts[0],m)});break;
+    case 'circle2':add(dist(pts[0],m)>1e-9?circ2(pts[0],m):null);break;
+    case 'circle3':if(pts.length===1)out.push({t:'line',a:pts[0],b:m});else add(circ3(pts[0],pts[1],m)||{t:'line',a:pts[0],b:m});break;
     case 'arc':if(pts.length===1)out.push({t:'line',a:pts[0],b:m});else{const g=arc3(pts[0],pts[1],m);out.push(g?{t:'arc',...g}:{t:'line',a:pts[0],b:m});}break;
-    case 'measure':out.push({t:'line',a:pts[0],b:m});break;
+    case 'arcsce':if(pts.length===1)out.push({t:'line',a:pts[0],b:m});else{out.push({t:'line',a:pts[1],b:m});add(arcSCE(pts[0],pts[1],m));}break;
+    case 'ellipse':if(pts.length===1)out.push({t:'line',a:pts[0],b:m});else add(ellAxis(pts[0],pts[1],m));break;
+    case 'ellipsec':if(pts.length===1)out.push({t:'line',a:pts[0],b:m});else add(ellCenter(pts[0],pts[1],m));break;
+    case 'spline':out.push({t:'spline',p:[...pts,m],closed:false});break;
+    case 'xline':case 'ray':out.push({t:tool,p:pts[0],ang:Math.atan2(m.y-pts[0].y,m.x-pts[0].x)});break;
+    case 'dist':out.push({t:'line',a:pts[0],b:m});break;
     case 'dim':if(pts.length===1)out.push({t:'line',a:pts[0],b:m});else out.push({t:'dim',a:pts[0],b:pts[1],o:m,m:$('optDim').value,h:textH()});break;
     case 'move':case 'copy':{const dx=m.x-pts[0].x,dy=m.y-pts[0].y;selEnts().forEach(e=>out.push(xform(e,p=>({x:p.x+dx,y:p.y+dy}),0)));out.push({t:'line',a:pts[0],b:m});break;}
     case 'rotate':{const a=Math.atan2(m.y-pts[0].y,m.x-pts[0].x);selEnts().forEach(e=>out.push(xform(e,p=>rot(p,pts[0],a),a)));out.push({t:'line',a:pts[0],b:m});break;}
+    case 'scale':{
+      out.push({t:'line',a:pts[0],b:m});
+      if(pts.length===2){const k=scaleK(pts,m);if(k>0)selEnts().forEach(e=>out.push(xform(e,q=>({x:pts[0].x+(q.x-pts[0].x)*k,y:pts[0].y+(q.y-pts[0].y)*k}),0,undefined,k)));}
+      break;}
     case 'mirror':{if(dist(pts[0],m)>1e-9){const{f,th}=mirrorF(pts[0],m);selEnts().forEach(e=>out.push(xform(e,f,0,th)));}out.push({t:'line',a:pts[0],b:m});break;}
+    case 'break':if(pend&&pend.id){out.push({t:'line',a:pend.p,b:m});}break;
   }
   return out;
 }
+const scaleK=(p,m)=>{const r=dist(p[0],p[1]);return r>1e-9?dist(p[0],m)/r:0;};
 function hudText(){
   if(!pts.length)return'';
   const a=pts[pts.length-1],m=mouse.p,d=dist(a,m),ang=Math.atan2(m.y-a.y,m.x-a.x)*R2D;
   switch(tool){
     case 'rect':return`${fmt(Math.abs(m.x-a.x))} × ${fmt(Math.abs(m.y-a.y))}`;
-    case 'circle':return`R=${fmt(d)}`;
+    case 'circle':case 'polygon':return`R=${fmt(d)}`;
+    case 'circle2':return`D=${fmt(d)}`;
     case 'rotate':return`${fmt(ang)}°`;
-    case 'arc':return pts.length===1?`L=${fmt(d)}`:'';
+    case 'scale':return pts.length===2?`× ${fmt(scaleK(pts,m))}`:`ref ${fmt(d)}`;
+    case 'arc':case 'arcsce':return pts.length===1?`L=${fmt(d)}`:'';
+    case 'ellipse':case 'ellipsec':return pts.length===1?`L=${fmt(d)}`:'';
     case 'dim':return pts.length===1?`L=${fmt(d)}`:`= ${fmt(dimParts({a:pts[0],b:pts[1],o:m,m:$('optDim').value,h:textH()}).val)}`;
+    case 'stretch':return`Δ ${fmt(m.x-a.x)}, ${fmt(m.y-a.y)}`;
     default:return`L=${fmt(d)}  ∠${fmt(ang)}°`;
   }
 }
 
-/* ---------- Grip (hiệu chỉnh bằng kéo) ---------- */
+/* ---------- Grips ---------- */
 function grips(e){
   const G=[],add=(p,mv)=>G.push({p,mv}),P=q=>({x:q.x,y:q.y});
   switch(e.t){
     case 'line':
       add(e.a,(n,q)=>{n.a=P(q);});add(e.b,(n,q)=>{n.b=P(q);});
       add({x:(e.a.x+e.b.x)/2,y:(e.a.y+e.b.y)/2},(n,q,o)=>{const m={x:(o.a.x+o.b.x)/2,y:(o.a.y+o.b.y)/2},dx=q.x-m.x,dy=q.y-m.y;n.a={x:o.a.x+dx,y:o.a.y+dy};n.b={x:o.b.x+dx,y:o.b.y+dy};});break;
-    case 'pl':e.p.forEach((v,i)=>add(v,(n,q)=>{n.p[i]=P(q);}));break;
+    case 'pl':case 'spline':e.p.forEach((v,i)=>add(v,(n,q)=>{n.p[i]=P(q);}));break;
     case 'circle':add(e.c,(n,q)=>{n.c=P(q);});add(pt(e.c,e.r,0),(n,q)=>{n.r=Math.max(dist(n.c,q),1e-6);});break;
     case 'arc':
       add(e.c,(n,q)=>{n.c=P(q);});
       add(pt(e.c,e.r,e.a0),(n,q)=>{n.a0=Math.atan2(q.y-n.c.y,q.x-n.c.x);});
       add(pt(e.c,e.r,e.a1),(n,q)=>{n.a1=Math.atan2(q.y-n.c.y,q.x-n.c.x);});
       add(pt(e.c,e.r,e.a0+nrm(e.a1-e.a0)/2),(n,q)=>{n.r=Math.max(dist(n.c,q),1e-6);});break;
+    case 'ellipse':{
+      const a=e.rot||0,co=Math.cos(a),si=Math.sin(a);
+      add(e.c,(n,q)=>{n.c=P(q);});
+      add({x:e.c.x+e.rx*co,y:e.c.y+e.rx*si},(n,q)=>{n.rx=Math.max(dist(n.c,q),1e-6);n.rot=Math.atan2(q.y-n.c.y,q.x-n.c.x);});
+      add({x:e.c.x-e.ry*si,y:e.c.y+e.ry*co},(n,q)=>{n.ry=Math.max(dist(n.c,q),1e-6);});break;}
+    case 'point':add(e.p,(n,q)=>{n.p=P(q);});break;
+    case 'xline':case 'ray':
+      add(e.p,(n,q)=>{n.p=P(q);});
+      add({x:e.p.x+Math.cos(e.ang)*40/view.s,y:e.p.y+Math.sin(e.ang)*40/view.s},(n,q)=>{if(dist(n.p,q)>1e-9)n.ang=Math.atan2(q.y-n.p.y,q.x-n.p.x);});break;
     case 'text':add(e.p,(n,q)=>{n.p=P(q);});break;
     case 'dim':add(e.a,(n,q)=>{n.a=P(q);});add(e.b,(n,q)=>{n.b=P(q);});add(e.o,(n,q)=>{n.o=P(q);});break;
   }
@@ -655,100 +1071,394 @@ function applyGrip(q){
   S.ents[idx]=ne;
 }
 
-/* ---------- Công cụ ---------- */
+/* ---------- Tools ---------- */
 const TOOLS=[
- ['select','↖','Select','V','Select: click, or drag left→right = window, right→left = crossing. Shift = add/remove. Drag the blue grips to reshape.'],
- ['pan','✋','Pan','H','Pan: drag to move the view.'],
- null,
- ['line','╱','Line','L','Line: click points. You can type a length or @dx,dy. Right-click/Esc to stop.'],
- ['pl','⌇','Polyline','P','Polyline: click vertices. Enter/right-click to finish, type "cl" to close.'],
- ['rect','▭','Rectangle','R','Rectangle: click two opposite corners (or type @width,height).'],
- ['circle','◯','Circle','C','Circle: click the center, then a point on the circle (or type the radius).'],
- ['arc','◠','Arc','A','3-point arc: click start, a point on the arc, then the end.'],
- null,
- ['text','Aa','Text','N','Text: click a position, then type the text in the Command box and press Enter (use \\n for a new line). Height comes from Options.'],
- ['dim','↔','Dimension','I','Dimension: click the first point, the second point, then the dimension line position. Choose Aligned/Horizontal/Vertical in Options.'],
- ['hatch','▨','Hatch','G','Hatch: click inside a closed shape (rectangle, closed polyline, circle). Closed shapes inside become holes.'],
- ['measure','⟷','Measure','D','Measure: click two points.'],
- null,
- ['move','✥','Move','M','Move: click a base point, then a destination (or type @dx,dy).'],
- ['copy','⧉','Copy','O','Copy: click a base point, then destination points. Esc to stop.'],
- ['rotate','↻','Rotate','T','Rotate: click the pivot, then a direction, or type an angle in degrees.'],
- ['mirror','⇋','Mirror','S','Mirror: click two points of the mirror axis. Tick "Delete original" in Options to remove the source.'],
- ['trim','✂','Trim','W','Trim: click the part of a line/arc/circle to remove, up to the nearest intersections.'],
- ['offset','⫽','Offset','F','Offset: click an object, then click the side for the parallel copy. Distance is in Options (or type a number).'],
- ['erase','🗑','Erase','Del','Erase the selected objects.']
+ ['select','↖','Select','select v','Select: click objects, or drag a window (left→right = inside) / crossing (right→left = touching). Shift = add/remove. Drag the blue grips to reshape.'],
+ ['pan','✋','Pan','pan p','Pan: drag to move the view.'],
+ ['line','╱','Line','line l','Line: click points. Type a length or @dx,dy. Enter/right-click to end, U = undo last segment.'],
+ ['pl','⌇','Polyline','pline pl polyline','Polyline: click vertices. Enter to finish, CL to close, U to remove the last vertex.'],
+ ['rect','▭','Rectangle','rectang rec rect rectangle','Rectangle: click two opposite corners (or type @width,height).'],
+ ['polygon','⬡','Polygon','polygon pol','Polygon: type the number of sides (see Options), click the center, then a point (inscribed or circumscribed, set in Options).'],
+ ['circle','◯','Circle','circle c','Circle: click the center, then a point on the circle (or type the radius).'],
+ ['circle2','◯','Circle 2P','circle2p c2p','Circle 2P: click two points that form a diameter.'],
+ ['circle3','◯','Circle 3P','circle3p c3p','Circle 3P: click three points on the circle.'],
+ ['arc','◠','Arc 3P','arc a','Arc: click start, a point on the arc, then the end.'],
+ ['arcsce','◠','Arc S-C-E','arcsce asc','Arc: click start point, center, then end point (drawn counter-clockwise).'],
+ ['ellipse','⬭','Ellipse','ellipse el','Ellipse: click the two ends of an axis, then a point for the other half-axis.'],
+ ['ellipsec','⬭','Ellipse Ctr','ellipsec elc','Ellipse: click the center, an axis end, then a point for the other half-axis.'],
+ ['spline','〰','Spline','spline spl','Spline: click fit points. Enter to finish, CL to close.'],
+ ['point','·','Point','point po','Point: click to place point objects. Esc to stop.'],
+ ['xline','↔','Xline','xline xl','Construction line: click a base point, then points to define lines through it.'],
+ ['ray','↗','Ray','ray','Ray: click the start point, then points to define rays.'],
+ ['region','▤','Region','region reg','Region: select closed shapes (nested shapes become holes) and press Enter.'],
+ ['boundary','▣','Boundary','boundary bo','Boundary: click inside an area enclosed by lines/arcs/circles. Creates a closed polyline or region (see Options).'],
+ ['hatch','▨','Hatch','hatch h bh','Hatch: click inside a closed area (even if bounded by several objects). Nested shapes become holes.'],
+ ['move','✥','Move','move m','Move: select objects, then click a base point and a destination (or type @dx,dy).'],
+ ['copy','⧉','Copy','copy co cp','Copy: select objects, click a base point, then destination points. Enter to stop.'],
+ ['rotate','↻','Rotate','rotate ro','Rotate: select objects, click the pivot, then a direction (or type an angle in degrees).'],
+ ['scale','⤢','Scale','scale sc','Scale: select objects, click a base point, then type a factor, or click a reference point and a new point.'],
+ ['mirror','⇋','Mirror','mirror mi','Mirror: select objects, click two points of the mirror axis. Tick "Delete original" in Options to remove the source.'],
+ ['stretch','⇥','Stretch','stretch s','Stretch: drag a CROSSING window (right→left) around the ends to move, then click a base point and a destination.'],
+ ['trim','✂','Trim','trim tr','Trim: click the part to remove (cutting edges = all objects). Shift+click extends instead.'],
+ ['extend','⇤','Extend','extend ex','Extend: click near the end of a line / arc / open polyline to extend it to the next object. Shift+click trims instead.'],
+ ['break','⊸','Break','break br','Break: click the object (first break point), then the second break point. Click the same spot twice to split in two.'],
+ ['join','⛓','Join','join j','Join: select lines / polylines / arcs that touch end-to-end and press Enter.'],
+ ['fillet','⌒','Fillet','fillet f','Fillet: click two lines. Radius is in Options (0 = sharp corner); you can also type a radius.'],
+ ['chamfer','◣','Chamfer','chamfer cha','Chamfer: click two lines. Distances are in Options; you can also type "d1,d2".'],
+ ['offset','⫽','Offset','offset o','Offset: click an object, then click the side for the parallel copy. Distance is in Options (or type a number).'],
+ ['arrayr','⊞','Array Rect','arrayrect arrayr ar array','Array: select objects, then fill in rows / columns in the dialog.'],
+ ['arrayp','✲','Array Polar','arraypolar arrayp','Polar array: select objects, click the center point, then fill in the dialog.'],
+ ['explode','✸','Explode','explode x','Explode: select polylines / regions / dimensions / hatches and press Enter.'],
+ ['erase','🗑','Erase','erase e del','Erase: select objects and press Enter.'],
+ ['text','Aa','Text','text t dt mtext mt','Text: click a position, then type the text in the Command box and press Enter (use \\n for a new line).'],
+ ['dim','⟺','Dimension','dim dli dimlinear','Dimension: click the first point, the second point, then the dimension line position. Choose Aligned/Horizontal/Vertical in Options.'],
+ ['dist','⟷','Distance','dist di','Distance: click two points.'],
+ ['divide','⁞','Divide','divide div','Divide: click an object, then enter the number of segments. Point objects are placed.'],
+ ['meas','┆','Measure','measure me','Measure: click an object, then enter the segment length. Point objects are placed.'],
+ ['match','🖌','Match Prop','matchprop ma','Match properties: click the source object, then click destination objects. Enter to finish.'],
+ ['qselect','⚑','Quick Select','qselect qsel','Quick select: choose filters in the dialog.']
 ];
-const NEEDSEL=['move','copy','rotate','mirror'];
+const TOOLS3=[
+ ['select','↖','Select','select v','Select: click a solid (Shift = add/remove). Arrow keys nudge in XY, PgUp/PgDn in Z, Del deletes. Edit values in Properties.'],
+ ['orbit','⟲','Orbit','orbit 3do o','Orbit: drag to rotate the view, Shift+drag to pan. Right-drag also orbits, middle-drag pans, wheel zooms.'],
+ ['box','▣','Box','box b','Box: click two opposite base corners on the ground. Height comes from the Height option.'],
+ ['cyl','⏺','Cylinder','cyl cylinder','Cylinder: click the center, then a point for the radius. Height comes from the Height option.'],
+ ['cone','△','Cone','cone','Cone: click the center, then a point for the radius. Height comes from the Height option.'],
+ ['sph','●','Sphere','sph sphere','Sphere: click the center, then a point for the radius.'],
+ ['ext','⬒','Extrude','ext extrude','Extrude: click inside a closed 2D shape or region (holes are kept). Height comes from the Height option.'],
+ ['rev','⟳','Revolve','rev revolve','Revolve: click inside a closed 2D shape or region, then two points for the axis. Angle is in Options.'],
+ ['union','∪','Union','union uni','Union: select two or more solids first, then run this command.'],
+ ['subtract','∖','Subtract','subtract su','Subtract: select the solid(s) to subtract FROM, run this command, then click the solid(s) to remove and press Enter.'],
+ ['intersect','∩','Intersect','intersect in','Intersect: select two or more solids first, then run this command.'],
+ ['pp','⇅','Press/Pull','presspull press pp','Press/Pull: click a flat face of a solid, then enter a distance (negative = push in).'],
+ ['move','✥','Move','move m','Move: click a base point, then a destination point on the ground. Use the Z field for height.'],
+ ['copy','⧉','Copy','copy co cp','Copy: click a base point, then destination points. Esc to stop.'],
+ ['del','🗑','Delete','erase e del delete','Delete the selected solids.']
+];
+const PANELS2=[['Utilities',['select','pan']],
+ ['Draw',['line','pl','rect','polygon','circle','circle2','circle3','arc','arcsce','ellipse','ellipsec','spline','point','xline','ray','region','boundary','hatch']],
+ ['Modify',['move','copy','rotate','scale','mirror','stretch','trim','extend','break','join','fillet','chamfer','offset','arrayr','arrayp','explode','erase']],
+ ['Annotate',['text','dim','dist','divide','meas']],
+ ['Properties',null]];
+const PANELS3=[['Utilities',['select','orbit']],['Solids',['box','cyl','cone','sph','ext','rev']],['Solid editing',['union','subtract','intersect','pp']],['Modify',['move','copy','del']]];
+const ALIAS={},ALIAS3={};
+TOOLS.forEach(t=>t[3].split(' ').forEach(w=>{ALIAS[w]=t[0];}));
+TOOLS3.forEach(t=>t[3].split(' ').forEach(w=>{ALIAS3[w]=t[0];}));
+const ACTS=[['undo','Undo'],['u','Undo'],['redo','Redo'],['zoom','Zoom extents'],['ze','Zoom extents'],['regen','Redraw'],['grid','Toggle grid'],['snap','Toggle grid snap'],['ortho','Toggle ortho'],['osnap','Toggle object snap'],['lwt','Toggle lineweight display'],['pickbox','Set pickbox size'],['cursor','Set crosshair size'],['layer','Set / create current layer'],['all','Select all'],['3d','Switch to 3D'],['2d','Switch to 2D'],['cl','Close shape']];
+function cmdList(){
+  const out=[];
+  const src=mode==='3d'?TOOLS3:TOOLS;
+  src.forEach(t=>t[3].split(' ').forEach(w=>out.push({w,d:t[2]})));
+  ACTS.forEach(([w,d])=>out.push({w,d}));
+  if(mode!=='3d')TOOLS3.forEach(t=>t[3].split(' ').forEach(w=>{if(!ALIAS[w])out.push({w,d:t[2]+' (3D)'});}));
+  return out;
+}
 function buildTools(){
   const box=$('tools');box.innerHTML='';
-  (mode==='3d'?TOOLS3:TOOLS).forEach(t=>{
-    if(!t){const s=document.createElement('div');s.className='sep';box.appendChild(s);return;}
-    const b=document.createElement('button');b.className='tool';b.dataset.tool=t[0];b.title=`${t[2]} (${t[3]})\n${t[4]}`;
-    b.innerHTML=`<i>${t[1]}</i>${t[2]}`;b.onclick=()=>mode==='3d'?setTool3(t[0]):setTool(t[0]);box.appendChild(b);
+  const T=mode==='3d'?TOOLS3:TOOLS,M={};T.forEach(t=>{M[t[0]]=t;});
+  (mode==='3d'?PANELS3:PANELS2).forEach(([title,ids])=>{
+    const p=document.createElement('div');p.className='panel';
+    const b=document.createElement('div');b.className='pbody';
+    if(ids){
+      ids.forEach(id=>{
+        const t=M[id];if(!t)return;
+        const bt=document.createElement('button');bt.className='tool';bt.dataset.tool=t[0];
+        bt.title=`${t[2]}  (${t[3].split(' ').join(', ')})\n${t[4]}`;
+        bt.innerHTML=`<i>${t[1]}</i>${t[2]}`;bt.onclick=()=>mode==='3d'?setTool3(t[0]):setTool(t[0]);b.appendChild(bt);
+      });
+    }else{
+      b.className='pbody pp';
+      const mk=(lab,id,opts,val,fn)=>{
+        const l=document.createElement('label');l.textContent=lab;
+        const s=document.createElement('select');s.id=id;
+        s.innerHTML=opts.map(o=>`<option value="${o[0]}">${o[1]}</option>`).join('');s.value=val;
+        s.onchange=()=>{fn(s.value);save();};b.append(l,s);
+      };
+      mk('Color','curCol',[['','ByLayer'],...PCOLS],S.curCol||'',v=>{S.curCol=v;});
+      mk('Linetype','curLt',[['','ByLayer'],...Object.keys(LT).map(k=>[k,LTN[k]])],S.curLt||'',v=>{S.curLt=v;});
+      mk('Lineweight','curLw',[['','ByLayer'],...LWS.map(w=>[String(w),w+' mm'])],S.curLw===''||S.curLw==null?'':String(S.curLw),v=>{S.curLw=v;});
+      ['match','qselect'].forEach(id=>{
+        const t=M[id],bt=document.createElement('button');bt.className='tool';bt.dataset.tool=id;bt.title=t[4];
+        bt.innerHTML=`<i>${t[1]}</i>${t[2]}`;bt.onclick=()=>setTool(id);b.appendChild(bt);
+      });
+    }
+    const ti=document.createElement('div');ti.className='ptitle';ti.textContent=title;
+    p.append(b,ti);box.appendChild(p);
   });
 }
-function setMsg(s){$('msg').textContent=s||'';}
-function setTool(t){
-  let warn=false;
-  if(t==='erase'){eraseSel();return;}
-  if(NEEDSEL.includes(t)&&!sel.size){setMsg('Select objects first (Select tool), then use this command.');t='select';warn=true;}
-  tool=t;pts=[];offTgt=null;pendingText=null;
-  document.querySelectorAll('#tools .tool').forEach(b=>b.classList.toggle('active',b.dataset.tool===t));
-  const info=TOOLS.find(x=>x&&x[0]===t);if(info&&!warn)setMsg(info[4]);
-  cv.style.cursor=t==='pan'?'grab':'crosshair';
-  redraw();
+function syncCurProps(){
+  const a=$('curCol'),b=$('curLt'),c=$('curLw');
+  if(a)a.value=S.curCol||'';if(b)b.value=S.curLt||'';if(c)c.value=(S.curLw===''||S.curLw==null)?'':String(S.curLw);
 }
-function eraseSel(){
-  if(!sel.size){setMsg('No objects selected to erase.');return;}
-  S.ents=S.ents.filter(e=>!sel.has(e.id));sel.clear();commit();redraw();
+
+/* messages / prompt line / history */
+let lastLog='';
+function logLine(t,c){const h=$('hist');if(!h)return;const d=document.createElement('div');d.className=c||'';d.textContent=t;h.appendChild(d);while(h.children.length>80)h.removeChild(h.firstChild);h.scrollTop=h.scrollHeight;}
+function setMsg(s){s=s||'';$('msg').textContent=s;if(s&&s!==lastLog){lastLog=s;logLine(s,'m');}}
+function prompt2(){
+  const T=(TOOLS.find(t=>t[0]===tool)||[0,0,tool])[2].toUpperCase(),n=pts.length;
+  if(pendingText)return'TEXT  Enter the text (Esc cancels):';
+  if(phase==='sel')return T+'  Select objects (Enter to finish):';
+  if(phase==='win')return T+'  Select objects with a crossing window:';
+  switch(tool){
+    case 'select':return'Command:';
+    case 'pan':return'PAN  Drag to pan:';
+    case 'line':return n?'LINE  Specify next point or [Undo]:':'LINE  Specify first point:';
+    case 'pl':return n?'PLINE  Specify next point or [Close/Undo] (Enter = finish):':'PLINE  Specify start point:';
+    case 'rect':return n?'RECTANGLE  Specify other corner:':'RECTANGLE  Specify first corner:';
+    case 'polygon':return n?`POLYGON  Specify ${polyCirc()?'edge midpoint':'vertex'} (${polyN()} sides):`:`POLYGON  Specify center (${polyN()} sides, type a number to change):`;
+    case 'circle':return n?'CIRCLE  Specify radius:':'CIRCLE  Specify center point:';
+    case 'circle2':return n?'CIRCLE 2P  Specify second end of diameter:':'CIRCLE 2P  Specify first end of diameter:';
+    case 'circle3':return`CIRCLE 3P  Specify point ${n+1} on circle:`;
+    case 'arc':return['ARC  Specify start point:','ARC  Specify second point:','ARC  Specify end point:'][n]||'ARC';
+    case 'arcsce':return['ARC  Specify start point:','ARC  Specify center:','ARC  Specify end point:'][n]||'ARC';
+    case 'ellipse':return['ELLIPSE  Specify axis endpoint:','ELLIPSE  Specify other endpoint of axis:','ELLIPSE  Specify distance to other axis:'][n]||'ELLIPSE';
+    case 'ellipsec':return['ELLIPSE  Specify center:','ELLIPSE  Specify axis endpoint:','ELLIPSE  Specify distance to other axis:'][n]||'ELLIPSE';
+    case 'spline':return n?'SPLINE  Specify next fit point or [Close] (Enter = finish):':'SPLINE  Specify first point:';
+    case 'point':return'POINT  Specify a point:';
+    case 'xline':return n?'XLINE  Specify through point:':'XLINE  Specify a point:';
+    case 'ray':return n?'RAY  Specify through point:':'RAY  Specify start point:';
+    case 'region':return'REGION  Select objects:';
+    case 'boundary':return'BOUNDARY  Click inside a closed area:';
+    case 'hatch':return'HATCH  Click inside a closed area:';
+    case 'move':case 'copy':return n?`${T}  Specify second point:`:`${T}  Specify base point:`;
+    case 'rotate':return n?'ROTATE  Specify rotation angle (or type degrees):':'ROTATE  Specify base point:';
+    case 'scale':return n===0?'SCALE  Specify base point:':n===1?'SCALE  Type a scale factor, or click a reference point:':'SCALE  Specify new point:';
+    case 'mirror':return n?'MIRROR  Specify second point of mirror line:':'MIRROR  Specify first point of mirror line:';
+    case 'stretch':return n?'STRETCH  Specify second point:':'STRETCH  Specify base point:';
+    case 'trim':return'TRIM  Click the object to trim (Shift = extend):';
+    case 'extend':return'EXTEND  Click the object to extend (Shift = trim):';
+    case 'break':return pend?'BREAK  Specify second break point:':'BREAK  Select object (first break point):';
+    case 'join':return'JOIN  Select objects:';
+    case 'fillet':return`FILLET (r=${fmt(fr())})  Select ${pend?'second':'first'} line:`;
+    case 'chamfer':return`CHAMFER (${fmt(cd1())},${fmt(cd2())})  Select ${pend?'second':'first'} line:`;
+    case 'offset':return offTgt?`OFFSET (${fmt(offD())})  Click the side:`:`OFFSET (${fmt(offD())})  Select object:`;
+    case 'arrayp':return'ARRAYPOLAR  Specify center point:';
+    case 'text':return'TEXT  Specify insertion point:';
+    case 'dim':return['DIMENSION  Specify first point:','DIMENSION  Specify second point:','DIMENSION  Specify dimension line position:'][n]||'DIMENSION';
+    case 'dist':return n?'DIST  Specify second point:':'DIST  Specify first point:';
+    case 'divide':return'DIVIDE  Select object:';
+    case 'meas':return'MEASURE  Select object:';
+    case 'match':return pend?'MATCHPROP  Select destination object (Enter = end):':'MATCHPROP  Select source object:';
+  }
+  return T+':';
 }
-function finish(close){
-  if(tool==='pl'&&pts.length>=2){addEnt({t:'pl',p:pts.map(p=>({...p})),closed:!!close});commit();}
-  pts=[];redraw();
+function prompt3(){
+  const n=pts3.length;
+  switch(tool3){
+    case 'select':return'3D Command:';
+    case 'orbit':return'3DORBIT  Drag to orbit:';
+    case 'box':return n?'BOX  Specify other corner:':'BOX  Specify first corner:';
+    case 'cyl':case 'cone':case 'sph':return n?`${tool3.toUpperCase()}  Specify radius:`:`${tool3.toUpperCase()}  Specify center:`;
+    case 'ext':return'EXTRUDE  Click inside a closed shape or region:';
+    case 'rev':return n===0&&!rev3?'REVOLVE  Click inside a closed shape or region:':`REVOLVE  Specify axis point ${rev3?rev3.axis.length+1:1}:`;
+    case 'subtract':return sub3?'SUBTRACT  Click solids to subtract (Enter = finish):':'SUBTRACT';
+    case 'pp':return pp3?'PRESSPULL  Type the distance in the dialog':'PRESSPULL  Click a flat face:';
+    case 'move':case 'copy':return n?'Specify second point:':'Specify base point:';
+  }
+  return'3D Command:';
 }
-function cancel(){
-  if(pts.length||offTgt||pendingText){pts=[];offTgt=null;pendingText=null;}
-  else if(sel.size){sel.clear();refreshUI();}
-  else if(tool!=='select')setTool('select');
-  redraw();
-}
+let pend3Dummy=0;
+function updPrompt(){const s=mode==='3d'?prompt3():prompt2(),el=$('prompt');if(el&&el.textContent!==s)el.textContent=s;}
+
+/* options helpers */
 const textH=()=>Math.max(parseFloat($('optTH').value)||10,0.01);
 const offD=()=>Math.abs(parseFloat($('optOff').value))||10;
+const fr=()=>Math.max(parseFloat($('optFR').value)||0,0);
+const cd1=()=>Math.max(parseFloat($('optCD1').value)||0,0);
+const cd2=()=>Math.max(parseFloat($('optCD2').value)||0,0);
+const polyN=()=>Math.max(3,Math.min(200,parseInt($('optPolyN').value)||6));
+const polyCirc=()=>$('optPolyM').value==='c';
+
+/* dialogs */
+function closeDlg(){const d=$('dlg');if(d)d.remove();}
+function dlg(title,fields,onOk,onCancel){
+  closeDlg();
+  const o=document.createElement('div');o.id='dlg';
+  let h=`<div class="box"><h3>${esc(title)}</h3><div class="grid">`;
+  for(const f of fields){
+    if(f.t==='select')h+=`<label>${esc(f.l)}</label><select data-k="${f.k}">${f.o.map(x=>`<option value="${esc(x[0])}"${x[0]===f.v?' selected':''}>${esc(x[1])}</option>`).join('')}</select>`;
+    else if(f.t==='check')h+=`<label>${esc(f.l)}</label><input type="checkbox" data-k="${f.k}"${f.v?' checked':''}>`;
+    else h+=`<label>${esc(f.l)}</label><input type="number" step="any" data-k="${f.k}" value="${f.v}">`;
+  }
+  h+='</div><div class="btns"><button class="ok">OK</button><button class="cn">Cancel</button></div></div>';
+  o.innerHTML=h;document.body.appendChild(o);
+  const get=()=>{const v={};o.querySelectorAll('[data-k]').forEach(i=>{v[i.dataset.k]=i.type==='checkbox'?i.checked:(i.tagName==='SELECT'?i.value:parseFloat(i.value));});return v;};
+  const ok=()=>{const v=get();if(onOk(v)===false)return;closeDlg();};
+  const cn=()=>{closeDlg();if(onCancel)onCancel();};
+  o.querySelector('.ok').onclick=ok;o.querySelector('.cn').onclick=cn;
+  o.addEventListener('keydown',ev=>{if(ev.key==='Enter'){ev.preventDefault();ev.stopPropagation();ok();}else if(ev.key==='Escape'){ev.stopPropagation();cn();}});
+  const f1=o.querySelector('input,select');if(f1){f1.focus();if(f1.select)f1.select();}
+}
+
+/* tool switching */
+const SELTOOLS=['move','copy','rotate','scale','mirror','arrayr','arrayp','explode','join','region','erase'];
+function setTool(t){
+  if(mode==='3d'){setTool3(t);return;}
+  closeDlg();
+  tool=t;pts=[];offTgt=null;pendingText=null;pend=null;phase=null;stretchWin=null;
+  if(t!=='select'&&t!=='pan')lastTool=t;
+  document.querySelectorAll('#tools .tool').forEach(b=>b.classList.toggle('active',b.dataset.tool===t));
+  const info=TOOLS.find(x=>x[0]===t);if(info)setMsg(info[4]);
+  cv.style.cursor=t==='pan'?'grab':'none';
+  if(t==='qselect'){qselDlg();return;}
+  if(t==='stretch')phase='win';
+  else if(SELTOOLS.includes(t)){if(sel.size)afterSel();else phase='sel';}
+  redraw();
+}
+function afterSel(){
+  phase=null;pts=[];
+  switch(tool){
+    case 'erase':eraseSel();return;
+    case 'explode':doExplode();setTool('select');return;
+    case 'join':doJoin();setTool('select');return;
+    case 'region':doRegion();setTool('select');return;
+    case 'arrayr':arrayDlg('rect');return;
+  }
+  redraw();
+}
+function finishSel(){if(!sel.size){setMsg('Nothing selected yet. Click objects or drag a window.');return;}afterSel();}
+function eraseSel(){
+  if(!sel.size){setMsg('No objects selected to erase.');return;}
+  S.ents=S.ents.filter(e=>!sel.has(e.id));sel.clear();commit();
+  if(tool==='erase')setTool('select');else redraw();
+}
+function finish(close){
+  if(phase==='sel'){finishSel();return;}
+  if(tool==='pl'&&pts.length>=2){addEnt({t:'pl',p:pts.map(p=>({...p})),closed:!!close});commit();}
+  else if(tool==='spline'&&pts.length>=2){addEnt({t:'spline',p:pts.map(p=>({...p})),closed:!!close});commit();}
+  pts=[];
+  if(tool!=='select')setTool('select');else redraw();
+}
+function cancel(){
+  if(pts.length||offTgt||pendingText||pend){pts=[];offTgt=null;pendingText=null;pend=null;if(phase==='win'){}}
+  else if(tool!=='select')setTool('select');
+  else if(sel.size){sel.clear();refreshUI();}
+  redraw();
+}
 function pickEnt(p,types){
-  const tol=8/view.s;let best=null,bd=tol;
-  for(const e of visEnts()){if(types&&!types.includes(e.t))continue;const d=entDist(e,p);if(d<bd){bd=d;best=e;}}
+  const tol=(PB+2)/view.s;let best=null,bd=tol;
+  for(const e of pickable()){if(types&&!types.includes(e.t))continue;const d=entDist(e,p);if(d<bd){bd=d;best=e;}}
   return best;
 }
+
+/* ---------- Object operations ---------- */
 function makeHatch(p){
-  const cands=[];
-  for(const e of visEnts()){const q=polyOf(e);if(q&&pip(p,q))cands.push({e,q,a:area(q)});}
-  if(!cands.length){setMsg('No closed region (rectangle, closed polyline or circle) found at this point.');return false;}
-  cands.sort((x,y)=>x.a-y.a);
-  const out=cands[0],loops=[out.q.map(q=>({x:q.x,y:q.y}))];
-  for(const e of visEnts()){
-    if(e===out.e)continue;const q=polyOf(e);
-    if(q&&area(q)<out.a&&q.every(v=>pip(v,out.q)))loops.push(q.map(v=>({x:v.x,y:v.y})));
+  let loops=null;
+  const rs=visEnts().filter(e=>e.t==='region'&&pip(p,e.loops[0])&&!e.loops.slice(1).some(h=>pip(p,h)));
+  if(rs.length){rs.sort((u,v)=>area(u.loops[0])-area(v.loops[0]));loops=rs[0].loops.map(l=>l.map(q=>({x:q.x,y:q.y})));}
+  if(!loops){
+    const cands=[];
+    for(const e of visEnts()){const q=polyOf(e);if(q&&pip(p,q))cands.push({e,q,a:area(q)});}
+    if(cands.length){
+      cands.sort((x,y)=>x.a-y.a);
+      const out=cands[0];loops=[out.q.map(q=>({x:q.x,y:q.y}))];
+      for(const e of visEnts()){
+        if(e===out.e)continue;const q=polyOf(e);
+        if(q&&area(q)<out.a&&q.every(v=>pip(v,out.q)))loops.push(q.map(v=>({x:v.x,y:v.y})));
+      }
+    }
   }
+  if(!loops){const b=boundaryAt(p);if(b)loops=[b.outer,...b.holes].map(l=>l.map(q=>({x:q.x,y:q.y})));}
+  if(!loops){setMsg('No closed area found at this point.');return false;}
   const sp=parseFloat($('optSp').value);
   addEnt({t:'hatch',loops,pat:$('optPat').value,sp:sp>0?sp:5,ang:parseFloat($('optAng').value)||0});
   commit();return true;
 }
-function offsetClick(p){
-  if(!offTgt){
-    const e=pickEnt(p,['line','pl','circle','arc']);
-    if(!e){setMsg('Click a line / polyline / circle / arc to offset.');return;}
-    offTgt=e.id;setMsg('Click the side to offset (distance '+fmt(offD())+').');return;
-  }
-  const e=S.ents.find(x=>x.id===offTgt);offTgt=null;if(!e)return;
-  const o=offsetEnt(e,offD(),p);
-  if(!o){setMsg('Cannot offset (distance too large or degenerate object).');return;}
-  addEnt(o);o.layer=e.layer;commit();
+function makeBoundary(p){
+  const b=boundaryAt(p);
+  if(!b){setMsg('No closed area found at this point (the area must be fully enclosed).');return false;}
+  const ids=[];
+  if($('optBnd').value==='region'){const e=addEnt({t:'region',loops:[b.outer,...b.holes]});ids.push(e.id);}
+  else{[b.outer,...b.holes].forEach(l=>{const e=addEnt({t:'pl',p:l.map(q=>({x:q.x,y:q.y})),closed:true});ids.push(e.id);});}
+  sel=new Set(ids);commit();setMsg(`Boundary created (${b.holes.length} hole(s)).`);return true;
 }
-function trimPick(p){
-  const e=pickEnt(p,['line','pl','circle','arc']);
-  if(!e){setMsg('Click the part to trim.');return;}
-  if(trimAt(e,p)){sel.clear();commit();}else setMsg('No intersections found to trim this object.');
+function doRegion(){
+  const cand=selEnts().filter(e=>e.t!=='region'&&loopsOf(e));
+  if(!cand.length){setMsg('Select closed shapes: closed polyline, rectangle, circle, ellipse or closed spline.');return false;}
+  const regs=buildRegions(cand.map(e=>({poly:loopsOf(e)[0]})));
+  S.ents=S.ents.filter(e=>!cand.includes(e));
+  const ids=[];
+  regs.forEach(r=>{const n=inherit({t:'region',loops:[r.outer,...r.holes]},cand[0]);n.id=S.next++;S.ents.push(n);ids.push(n.id);});
+  sel=new Set(ids);commit();setMsg(`${regs.length} region(s) created.`);return true;
+}
+function doExplode(){
+  let cnt=0;const rm=new Set(),add=[];
+  for(const e of selEnts()){
+    let parts=null;
+    if(e.t==='pl')parts=explode(e).map(x=>inherit(x,e));
+    else if(e.t==='region')parts=e.loops.map(l=>inherit({t:'pl',p:l.map(q=>({...q})),closed:true},e));
+    else if(e.t==='dim'){
+      const d=dimParts(e);parts=[];
+      d.lines.forEach(([a,b])=>parts.push(inherit({t:'line',a:{...a},b:{...b}},e)));
+      d.arrows.forEach(t=>parts.push(inherit({t:'pl',p:t.map(q=>({...q})),closed:true},e)));
+      if(d.text)parts.push(inherit({t:'text',p:{...d.text.p},s:d.text.s,h:d.text.h,rot:d.text.rot,c:true},e));
+    }
+    else if(e.t==='hatch')parts=hatchSegs(e).map(([a,b])=>inherit({t:'line',a:{...a},b:{...b}},e));
+    if(parts){rm.add(e.id);add.push(...parts);cnt++;}
+  }
+  if(!cnt){setMsg('Nothing to explode (use polylines, regions, dimensions or hatches).');return false;}
+  S.ents=S.ents.filter(e=>!rm.has(e.id));
+  add.forEach(n=>{n.id=S.next++;S.ents.push(n);});
+  sel=new Set(add.map(n=>n.id));commit();setMsg(`Exploded ${cnt} object(s) into ${add.length}.`);return true;
+}
+function doJoin(){
+  const used=selEnts().filter(e=>e.t==='line'||(e.t==='pl'&&!e.closed)||e.t==='arc');
+  if(used.length<2){setMsg('Select two or more lines / open polylines / arcs that touch end-to-end.');return false;}
+  const bb=bboxAll(used),tol=1e-6*Math.max(1,bb.x1-bb.x0,bb.y1-bb.y0),eq=(a,b)=>dist(a,b)<=tol;
+  let paths=[],arcs=[];
+  for(const e of used){
+    if(e.t==='line')paths.push([{...e.a},{...e.b}]);
+    else if(e.t==='pl')paths.push(e.p.map(q=>({...q})));
+    else arcs.push({t:'arc',c:{...e.c},r:e.r,a0:e.a0,a1:e.a1});
+  }
+  let m=true;
+  while(m){m=false;
+    outer:for(let i=0;i<paths.length;i++)for(let j=i+1;j<paths.length;j++){
+      const A=paths[i],B=paths[j];let M=null;
+      if(eq(A[A.length-1],B[0]))M=[...A,...B.slice(1)];
+      else if(eq(A[A.length-1],B[B.length-1]))M=[...A,...B.slice().reverse().slice(1)];
+      else if(eq(A[0],B[B.length-1]))M=[...B,...A.slice(1)];
+      else if(eq(A[0],B[0]))M=[...A.slice().reverse(),...B.slice(1)];
+      if(M){paths[i]=M;paths.splice(j,1);m=true;break outer;}
+    }
+  }
+  m=true;
+  const near=(x,y)=>{const d=Math.abs(nrm(x-y));return d<1e-7||Math.abs(d-TAU)<1e-7;};
+  while(m){m=false;
+    outer2:for(let i=0;i<arcs.length;i++)for(let j=i+1;j<arcs.length;j++){
+      const A=arcs[i],B=arcs[j];
+      if(dist(A.c,B.c)>tol||Math.abs(A.r-B.r)>tol)continue;
+      const sa=nrm(A.a1-A.a0),sb=nrm(B.a1-B.a0);
+      if(near(B.a0,A.a1)){A.a1=A.a0+sa+sb;arcs.splice(j,1);m=true;break outer2;}
+      if(near(A.a0,B.a1)){B.a1=B.a0+sa+sb;arcs[i]=B;arcs.splice(j,1);m=true;break outer2;}
+    }
+  }
+  const out=[];
+  for(const P of paths){
+    const closed=P.length>3&&eq(P[0],P[P.length-1]);
+    const Q=closed?P.slice(0,-1):P;
+    const col=!closed&&Q.every(q=>Math.abs(cross2({x:Q[Q.length-1].x-Q[0].x,y:Q[Q.length-1].y-Q[0].y},{x:q.x-Q[0].x,y:q.y-Q[0].y}))<tol*Math.max(1,dist(Q[0],Q[Q.length-1])));
+    if(Q.length===2||col)out.push({t:'line',a:{...Q[0]},b:{...Q[Q.length-1]}});
+    else out.push({t:'pl',p:Q.map(q=>({...q})),closed});
+  }
+  for(const A of arcs){
+    if(nrm(A.a1-A.a0)+ (A.a1-A.a0>=TAU-1e-9?TAU:0)>=TAU-1e-7||A.a1-A.a0>=TAU-1e-7)out.push({t:'circle',c:A.c,r:A.r});
+    else out.push(A);
+  }
+  S.ents=S.ents.filter(e=>!used.includes(e));
+  const ids=[];out.forEach(n=>{inherit(n,used[0]);n.id=S.next++;S.ents.push(n);ids.push(n.id);});
+  sel=new Set(ids);commit();setMsg(`Joined ${used.length} objects into ${out.length}.`);return true;
+}
+function doScale(base,k){
+  if(!(k>0)){setMsg('Scale factor must be greater than 0.');return;}
+  const f=q=>({x:base.x+(q.x-base.x)*k,y:base.y+(q.y-base.y)*k});
+  S.ents=S.ents.map(e=>sel.has(e.id)?xform(e,f,0,undefined,k):e);
+  commit();pts=[];setTool('select');
+}
+function doStretch(dx,dy){
+  S.ents=S.ents.map(e=>{if(!sel.has(e.id))return e;const n=stretchEnt(e,stretchWin,dx,dy);return n||e;});
+  commit();pts=[];stretchWin=null;setTool('select');
 }
 function doMirror(A,B){
   if(dist(A,B)<1e-9)return;
@@ -758,42 +1468,344 @@ function doMirror(A,B){
   commit();pts=[];setTool('select');
 }
 function doRotate(c,a){S.ents=S.ents.map(e=>sel.has(e.id)?xform(e,q=>rot(q,c,a),a):e);commit();pts=[];setTool('select');}
+function arrayDlg(kind){
+  if(!sel.size){setMsg('Select objects first.');setTool('select');return;}
+  if(kind==='rect'){
+    dlg('Rectangular array',[
+      {k:'kind',t:'select',l:'Type',v:'rect',o:[['rect','Rectangular'],['polar','Polar (then click the center)']]},
+      {k:'rows',l:'Rows',v:3},{k:'cols',l:'Columns',v:3},{k:'dr',l:'Row spacing (Y)',v:20},{k:'dc',l:'Column spacing (X)',v:20},{k:'ang',l:'Array angle (°)',v:0}
+    ],v=>{
+      if(v.kind==='polar'){tool='arrayp';pts=[];setMsg('Click the center point of the polar array.');redraw();return;}
+      doArrayRect(v);setTool('select');
+    },()=>setTool('select'));
+  }else{
+    dlg('Polar array',[
+      {k:'n',l:'Total number of items',v:6},{k:'fill',l:'Angle to fill (°)',v:360},{k:'rotItems',t:'check',l:'Rotate items',v:true}
+    ],v=>{doArrayPolar(pts[0],v);setTool('select');},()=>setTool('select'));
+  }
+}
+function doArrayRect(v){
+  const R=Math.max(1,Math.round(v.rows)),C=Math.max(1,Math.round(v.cols)),a=(v.ang||0)/R2D,co=Math.cos(a),si=Math.sin(a);
+  if(R*C>5000){setMsg('Array too large (max 5000 items).');return;}
+  const src=selEnts(),ns=[];
+  for(let i=0;i<R;i++)for(let j=0;j<C;j++){
+    if(!i&&!j)continue;
+    const dx=j*v.dc*co-i*v.dr*si,dy=j*v.dc*si+i*v.dr*co;
+    for(const e of src){const n=xform(e,q=>({x:q.x+dx,y:q.y+dy}),0);n.id=S.next++;ns.push(n);}
+  }
+  S.ents.push(...ns);sel=new Set([...sel,...ns.map(n=>n.id)]);commit();setMsg(`Array: ${R} × ${C}.`);
+}
+function doArrayPolar(c,v){
+  const N=Math.max(2,Math.round(v.n)),fill=(v.fill||360)/R2D,step=Math.abs(fill-TAU)<1e-9?fill/N:fill/(N-1);
+  if(N>5000)return;
+  const src=selEnts(),ns=[],bb=bboxAll(src),mid={x:(bb.x0+bb.x1)/2,y:(bb.y0+bb.y1)/2};
+  for(let k=1;k<N;k++){
+    const a=k*step;
+    for(const e of src){
+      let n;
+      if(v.rotItems)n=xform(e,q=>rot(q,c,a),a);
+      else{const t=rot(mid,c,a),dx=t.x-mid.x,dy=t.y-mid.y;n=xform(e,q=>({x:q.x+dx,y:q.y+dy}),0);}
+      n.id=S.next++;ns.push(n);
+    }
+  }
+  S.ents.push(...ns);sel=new Set([...sel,...ns.map(n=>n.id)]);commit();setMsg(`Polar array: ${N} items.`);
+}
+function divideClick(p,kind){
+  const e=pickEnt(p,['line','pl','circle','arc','ellipse','spline']);
+  if(!e){setMsg('Select a line, polyline, circle, arc, ellipse or spline.');return;}
+  const po=pathOf(e),L=pathLen(po.P,po.closed);
+  const place=ds=>{const ids=ds.map(s=>addEnt({t:'point',p:pointAtLen(po.P,po.closed,s)}).id);commit();setMsg(`${ids.length} point(s) placed.`);};
+  if(kind==='divide')dlg('Divide',[{k:'n',l:'Number of segments',v:4}],v=>{
+    const n=Math.round(v.n);if(!(n>=2&&n<=2000)){setMsg('Enter 2–2000 segments.');return false;}
+    const ds=[];for(let k=po.closed?0:1;k<n;k++)ds.push(k*L/n);place(ds);
+  });
+  else dlg('Measure',[{k:'len',l:`Segment length (total ${fmt(L)})`,v:Math.round(L/4*1000)/1000||1}],v=>{
+    if(!(v.len>0)||L/v.len>5000){setMsg('Invalid length.');return false;}
+    const ds=[];for(let k=1;k*v.len<L-1e-9;k++)ds.push(k*v.len);place(ds);
+  });
+}
+function matchClick(p){
+  const e=pickEnt(p);
+  if(!e){setMsg(pend?'Click a destination object.':'Click the source object.');return;}
+  if(!pend){pend={id:e.id};setMsg('MATCHPROP  Now click destination objects (Enter to finish).');return;}
+  const src=S.ents.find(x=>x.id===pend.id);
+  if(!src||src===e)return;
+  inherit(e,src);commit();
+}
+function qselDlg(){
+  const types=[...new Set(S.ents.map(e=>e.t))],lts=[...new Set(S.ents.map(effLt))],cols=[...new Set(S.ents.map(effCol))];
+  dlg('Quick Select',[
+    {k:'type',t:'select',l:'Object type',v:'*',o:[['*','All types'],...types.map(t=>[t,t])]},
+    {k:'layer',t:'select',l:'Layer',v:'*',o:[['*','All layers'],...S.layers.map(l=>[l.name,l.name])]},
+    {k:'lt',t:'select',l:'Linetype',v:'*',o:[['*','Any'],...lts.map(n=>[n,LTN[n]||n])]},
+    {k:'col',t:'select',l:'Color',v:'*',o:[['*','Any'],...cols.map(c=>[c,c])]},
+    {k:'ex',t:'select',l:'Apply as',v:'in',o:[['in','Include in new selection'],['out','Exclude from new selection']]}
+  ],v=>{
+    const m=e=>(v.type==='*'||e.t===v.type)&&(v.layer==='*'||e.layer===v.layer)&&(v.lt==='*'||effLt(e)===v.lt)&&(v.col==='*'||effCol(e)===v.col);
+    sel=new Set(pickable().filter(e=>v.ex==='in'?m(e):!m(e)).map(e=>e.id));
+    setTool('select');refreshUI();setMsg(`${sel.size} object(s) selected.`);
+  },()=>setTool('select'));
+}
+/* trim / extend */
+function trimPick(p){
+  const e=pickEnt(p,['line','pl','circle','arc']);
+  if(!e){setMsg('Click the part to trim.');return;}
+  if(trimAt(e,p)){sel.clear();commit();}else setMsg('No intersections found to trim this object.');
+}
+function rayHits(O,d,P){
+  const out=[];
+  if(P.k==='s'){
+    const ex=P.b.x-P.a.x,ey=P.b.y-P.a.y,den=d.x*ey-d.y*ex;if(Math.abs(den)<1e-12)return out;
+    const wx=P.a.x-O.x,wy=P.a.y-O.y,s=(wx*ey-wy*ex)/den,u=(wx*d.y-wy*d.x)/den;
+    if(s>1e-9&&u>=-1e-9&&u<=1+1e-9)out.push(s);
+  }else{
+    const fx=O.x-P.c.x,fy=O.y-P.c.y,a=d.x*d.x+d.y*d.y,b=2*(fx*d.x+fy*d.y),c=fx*fx+fy*fy-P.r*P.r;let disc=b*b-4*a*c;
+    if(disc<0)return out;disc=Math.sqrt(disc);
+    for(const s of[(-b-disc)/(2*a),(-b+disc)/(2*a)])if(s>1e-9){const q={x:O.x+d.x*s,y:O.y+d.y*s};if(onC(P,q))out.push(s);}
+  }
+  return out;
+}
+function extendAt(e,p){
+  const P=visEnts().filter(x=>x.id!==e.id).flatMap(x=>prims(x));
+  const nearest=(O,d)=>{let m=Infinity;for(const q of P)for(const s of rayHits(O,d,q))if(s<m)m=s;return m;};
+  if(e.t==='line'){
+    const useB=dist(p,e.b)<dist(p,e.a),E=useB?e.b:e.a,F=useB?e.a:e.b,d=unit(F,E),s=nearest(E,d);
+    if(!isFinite(s))return false;
+    const nq={x:E.x+d.x*s,y:E.y+d.y*s};if(useB)e.b=nq;else e.a=nq;return true;
+  }
+  if(e.t==='pl'&&!e.closed&&e.p.length>=2){
+    const n=e.p.length,useEnd=dist(p,e.p[n-1])<dist(p,e.p[0]),i=useEnd?n-1:0,j=useEnd?n-2:1,E=e.p[i],d=unit(e.p[j],E),s=nearest(E,d);
+    if(!isFinite(s))return false;
+    e.p[i]={x:E.x+d.x*s,y:E.y+d.y*s};return true;
+  }
+  if(e.t==='arc'){
+    const full={k:'c',c:e.c,r:e.r,full:true},angs=[];
+    for(const x of visEnts().filter(x=>x.id!==e.id))for(const q of prims(x))for(const r of interPP(full,q))angs.push(Math.atan2(r.y-e.c.y,r.x-e.c.x));
+    if(!angs.length)return false;
+    const useEnd=dist(p,pt(e.c,e.r,e.a1))<dist(p,pt(e.c,e.r,e.a0));let m=Infinity;
+    for(const a of angs){const dl=useEnd?nrm(a-e.a1):nrm(e.a0-a);if(dl>1e-9&&dl<m)m=dl;}
+    if(!isFinite(m))return false;
+    if(useEnd)e.a1+=m;else e.a0-=m;return true;
+  }
+  return false;
+}
+function extendPick(p){
+  const e=pickEnt(p,['line','pl','arc']);
+  if(!e){setMsg('Click a line, arc or open polyline near the end to extend.');return;}
+  if(extendAt(e,p)){sel.clear();commit();}else setMsg('Nothing to extend to in that direction.');
+}
+/* break */
+function plParamOf(e,q){
+  const Q=e.closed?[...e.p,e.p[0]]:e.p;let best=1e18,bs=0,acc=0;
+  for(let i=0;i<Q.length-1;i++){
+    const a=Q[i],b=Q[i+1],dx=b.x-a.x,dy=b.y-a.y,l=dx*dx+dy*dy,t=l?Math.max(0,Math.min(1,((q.x-a.x)*dx+(q.y-a.y)*dy)/l)):0,d=Math.hypot(q.x-a.x-t*dx,q.y-a.y-t*dy),sl=Math.sqrt(l);
+    if(d<best){best=d;bs=acc+t*sl;}acc+=sl;
+  }
+  return bs;
+}
+function plSub(e,s0,s1){
+  const Q=e.closed?[...e.p,e.p[0]]:e.p,out=[];let acc=0;
+  const at=(i,t)=>({x:Q[i].x+(Q[i+1].x-Q[i].x)*t,y:Q[i].y+(Q[i+1].y-Q[i].y)*t});
+  for(let i=0;i<Q.length-1;i++){
+    const l=dist(Q[i],Q[i+1]),a=acc,b=acc+l;
+    if(b>s0+1e-12&&a<s1-1e-12&&l>0){const ta=Math.max(0,(s0-a)/l),tb=Math.min(1,(s1-a)/l);if(!out.length)out.push(at(i,ta));out.push(at(i,tb));}
+    acc=b;
+  }
+  return out;
+}
+function doBreak(e,p1,p2){
+  const res=[];
+  if(e.t==='line'){
+    const dx=e.b.x-e.a.x,dy=e.b.y-e.a.y,l=dx*dx+dy*dy,tf=q=>Math.max(0,Math.min(1,((q.x-e.a.x)*dx+(q.y-e.a.y)*dy)/l));
+    let t1=tf(p1),t2=tf(p2);if(t1>t2)[t1,t2]=[t2,t1];
+    const at=s=>({x:e.a.x+dx*s,y:e.a.y+dy*s});
+    if(t1>1e-9)res.push({t:'line',a:{...e.a},b:at(t1)});
+    if(t2<1-1e-9)res.push({t:'line',a:at(t2),b:{...e.b}});
+  }else if(e.t==='circle'){
+    const a1=Math.atan2(p1.y-e.c.y,p1.x-e.c.x),a2=Math.atan2(p2.y-e.c.y,p2.x-e.c.x);
+    if(Math.abs(nrm(a2-a1))<1e-9)return false;
+    res.push({t:'arc',c:{...e.c},r:e.r,a0:a2,a1:a1});
+  }else if(e.t==='arc'){
+    const sw=nrm(e.a1-e.a0)||TAU,sf=q=>{let v=nrm(Math.atan2(q.y-e.c.y,q.x-e.c.x)-e.a0);if(v>sw)v=(v-sw<TAU-v)?sw:0;return v;};
+    let s1=sf(p1),s2=sf(p2);if(s1>s2)[s1,s2]=[s2,s1];
+    if(s1>1e-9)res.push({t:'arc',c:{...e.c},r:e.r,a0:e.a0,a1:e.a0+s1});
+    if(s2<sw-1e-9)res.push({t:'arc',c:{...e.c},r:e.r,a0:e.a0+s2,a1:e.a0+sw});
+  }else if(e.t==='pl'){
+    const L=pathLen(e.p,e.closed);let s1=plParamOf(e,p1),s2=plParamOf(e,p2);if(s1>s2)[s1,s2]=[s2,s1];
+    const mk=P=>P.length>=2?(P.length===2?{t:'line',a:P[0],b:P[1]}:{t:'pl',p:P,closed:false}):null;
+    if(e.closed){
+      const A=plSub(e,s2,L),B=plSub(e,0,s1);
+      const P=[...A,...(A.length&&B.length&&dist(A[A.length-1],B[0])<1e-9?B.slice(1):B)];
+      const n=mk(P);if(n)res.push(n);
+    }else{
+      if(s1>1e-9){const n=mk(plSub(e,0,s1));if(n)res.push(n);}
+      if(s2<L-1e-9){const n=mk(plSub(e,s2,L));if(n)res.push(n);}
+    }
+  }else return false;
+  S.ents=S.ents.filter(x=>x.id!==e.id);
+  for(const n of res){inherit(n,e);n.id=S.next++;S.ents.push(n);}
+  return true;
+}
+function breakClick(p,second){
+  if(!pend){
+    const e=pickEnt(p,['line','pl','circle','arc']);
+    if(!e){setMsg('Select a line, polyline, circle or arc.');return;}
+    pend={id:e.id,p:{...p}};setMsg('BREAK  Specify the second break point (click the same spot to split in two).');return;
+  }
+  const e=S.ents.find(x=>x.id===pend.id),p1=pend.p;pend=null;if(!e)return;
+  if(doBreak(e,p1,second||p)){sel.clear();commit();}else setMsg('Cannot break this object there.');
+}
+/* fillet / chamfer */
+function cornerCalc(L1,p1,L2,p2,mode,r,c1,c2){
+  const X=lineInter(L1.a,L1.b,L2.a,L2.b);if(!X)return null;
+  const side=(L,p)=>{
+    const d=unit(L.a,L.b),s=(p.x-X.x)*d.x+(p.y-X.y)*d.y,sg=s>=0?1:-1,da={x:sg*d.x,y:sg*d.y};
+    const ea=(L.a.x-X.x)*da.x+(L.a.y-X.y)*da.y,eb=(L.b.x-X.x)*da.x+(L.b.y-X.y)*da.y;
+    return{d:da,keep:ea>=eb?'a':'b',len:Math.max(ea,eb)};
+  };
+  const s1=side(L1,p1),s2=side(L2,p2);
+  const th=Math.acos(Math.max(-1,Math.min(1,s1.d.x*s2.d.x+s1.d.y*s2.d.y)));
+  if(th<1e-6||Math.abs(th-Math.PI)<1e-6)return null;
+  let T1,T2,extra=null;
+  if(mode==='fillet'){
+    if(r<1e-12){T1=T2=X;}
+    else{
+      const t=r/Math.tan(th/2);
+      if(t>s1.len+1e-9||t>s2.len+1e-9)return'radius';
+      T1={x:X.x+s1.d.x*t,y:X.y+s1.d.y*t};T2={x:X.x+s2.d.x*t,y:X.y+s2.d.y*t};
+      const bx=s1.d.x+s2.d.x,by=s1.d.y+s2.d.y,bl=Math.hypot(bx,by),h=r/Math.sin(th/2),C={x:X.x+bx/bl*h,y:X.y+by/bl*h};
+      const cr=cross2({x:T1.x-C.x,y:T1.y-C.y},{x:T2.x-C.x,y:T2.y-C.y}),A1=Math.atan2(T1.y-C.y,T1.x-C.x),A2=Math.atan2(T2.y-C.y,T2.x-C.x);
+      extra={t:'arc',c:C,r,a0:cr>0?A1:A2,a1:cr>0?A2:A1};
+    }
+  }else{
+    if(c1>s1.len+1e-9||c2>s2.len+1e-9)return'distance';
+    T1={x:X.x+s1.d.x*c1,y:X.y+s1.d.y*c1};T2={x:X.x+s2.d.x*c2,y:X.y+s2.d.y*c2};
+    if(dist(T1,T2)>1e-9)extra={t:'line',a:T1,b:T2};
+  }
+  const n1={a:{...L1.a},b:{...L1.b}},n2={a:{...L2.a},b:{...L2.b}};
+  n1[s1.keep==='a'?'b':'a']={x:T1.x,y:T1.y};n2[s2.keep==='a'?'b':'a']={x:T2.x,y:T2.y};
+  return{n1,n2,extra};
+}
+function explodeInPlace(pl){
+  const parts=explode(pl).map(x=>inherit(x,pl));
+  S.ents=S.ents.filter(x=>x.id!==pl.id);
+  parts.forEach(n=>{n.id=S.next++;S.ents.push(n);});
+  return parts;
+}
+function doCorner(a,b,kind){
+  const A=S.ents.find(x=>x.id===a.id),B=S.ents.find(x=>x.id===b.id);
+  if(!A||!B)return'Object not found.';
+  const segsOf=e=>e.t==='pl'?explode(e).map(s=>({a:s.a,b:s.b})):[{a:e.a,b:e.b}];
+  const near=(arr,p)=>{let bi=0,bd=1e18;arr.forEach((s,i)=>{const d=segDist(p,s.a,s.b);if(d<bd){bd=d;bi=i;}});return bi;};
+  const sa=segsOf(A),sb=A===B?sa:segsOf(B),ia=near(sa,a.p),ib=near(sb,b.p);
+  if(A===B&&ia===ib)return'Select two different lines.';
+  const r=cornerCalc(sa[ia],a.p,sb[ib],b.p,kind,fr(),cd1(),cd2());
+  if(r==='radius')return'Radius is too large for these lines.';
+  if(r==='distance')return'Chamfer distance is too large for these lines.';
+  if(!r)return'The lines are parallel; cannot create a corner.';
+  let la,lb;
+  if(A.t==='pl'){const parts=explodeInPlace(A);la=parts[ia];if(B===A)lb=parts[ib];}else la=A;
+  if(B!==A){if(B.t==='pl'){const parts=explodeInPlace(B);lb=parts[ib];}else lb=B;}
+  la.a=r.n1.a;la.b=r.n1.b;lb.a=r.n2.a;lb.b=r.n2.b;
+  if(r.extra){const n=inherit(r.extra,la);n.id=S.next++;S.ents.push(n);}
+  return true;
+}
+function cornerClick(p){
+  const e=pickEnt(p,['line','pl']);
+  if(!e){setMsg('Select a line (or a polyline segment).');return;}
+  if(!pend){pend={id:e.id,p:{...p}};setMsg(`${tool.toUpperCase()}  Select the second line.`);return;}
+  const a=pend;pend=null;
+  const r=doCorner(a,{id:e.id,p:{...p}},tool);
+  if(r===true){sel.clear();commit();}else setMsg(r);
+}
+function offsetClick(p){
+  if(!offTgt){
+    const e=pickEnt(p,['line','pl','circle','arc','xline']);
+    if(!e){setMsg('Click a line / polyline / circle / arc to offset.');return;}
+    offTgt=e.id;setMsg('Click the side to offset (distance '+fmt(offD())+').');return;
+  }
+  const e=S.ents.find(x=>x.id===offTgt);offTgt=null;if(!e)return;
+  const o=offsetEnt(e,offD(),p);
+  if(!o){setMsg('Cannot offset (distance too large or degenerate object).');return;}
+  addEnt(o);inherit(o,e);commit();
+}
+function stretchWindow(d){
+  const a=s2w(d.x0,d.y0),b=s2w(d.x1,d.y1);
+  const w={x0:Math.min(a.x,b.x),x1:Math.max(a.x,b.x),y0:Math.min(a.y,b.y),y1:Math.max(a.y,b.y)};
+  sel.clear();
+  for(const e of pickable()){const q=ebox(e);if(!(q.x1<w.x0||q.x0>w.x1||q.y1<w.y0||q.y0>w.y1)&&stretchEnt(e,w,1,1))sel.add(e.id);}
+  if(!sel.size){setMsg('Nothing with points inside the window. Drag a crossing window around the ends to move.');stretchWin=null;refreshUI();return;}
+  stretchWin=w;phase=null;pts=[];refreshUI();setMsg(`${sel.size} object(s). Specify the base point.`);
+}
+
+/* ---------- click handler ---------- */
 function click(p){
   const last=pts[pts.length-1];
-  if(last&&(tool==='line'||tool==='pl')&&dist(last,p)<1e-9)return;
+  if(last&&(tool==='line'||tool==='pl'||tool==='spline')&&dist(last,p)<1e-9)return;
+  if(phase)return;
+  const P=q=>({x:q.x,y:q.y});
   switch(tool){
-    case 'line':if(pts.length){addEnt({t:'line',a:{...pts[0]},b:{...p}});commit();}pts=[{...p}];break;
-    case 'pl':pts.push({...p});break;
-    case 'rect':if(pts.length){if(Math.abs(p.x-pts[0].x)>1e-9&&Math.abs(p.y-pts[0].y)>1e-9){addEnt({t:'pl',p:rectPts(pts[0],p),closed:true});commit();}pts=[];}else pts=[{...p}];break;
-    case 'circle':if(pts.length){const r=dist(pts[0],p);if(r>1e-9){addEnt({t:'circle',c:{...pts[0]},r});commit();}pts=[];}else pts=[{...p}];break;
-    case 'arc':pts.push({...p});if(pts.length===3){const g=arc3(...pts);if(g){addEnt({t:'arc',c:g.c,r:g.r,a0:g.a0,a1:g.a1});commit();}else setMsg('The three points are collinear; no arc created.');pts=[];}break;
-    case 'measure':if(pts.length){const a=pts[0],dx=p.x-a.x,dy=p.y-a.y;setMsg(`Distance ${fmt(Math.hypot(dx,dy))}  |  Δx ${fmt(dx)}  Δy ${fmt(dy)}  |  angle ${fmt(Math.atan2(dy,dx)*R2D)}°`);pts=[];}else pts=[{...p}];break;
-    case 'text':pendingText={...p};setMsg('Type the text in the Command box and press Enter (Esc cancels).');$('cmd').focus();break;
+    case 'line':if(pts.length){addEnt({t:'line',a:P(pts[0]),b:P(p)});commit();}pts=[P(p)];break;
+    case 'pl':case 'spline':pts.push(P(p));break;
+    case 'rect':if(pts.length){if(Math.abs(p.x-pts[0].x)>1e-9&&Math.abs(p.y-pts[0].y)>1e-9){addEnt({t:'pl',p:rectPts(pts[0],p),closed:true});commit();}pts=[];}else pts=[P(p)];break;
+    case 'polygon':if(pts.length){if(dist(pts[0],p)>1e-9){addEnt({t:'pl',p:polyPts(pts[0],p,polyN(),polyCirc()),closed:true});commit();}pts=[];}else pts=[P(p)];break;
+    case 'circle':if(pts.length){const r=dist(pts[0],p);if(r>1e-9){addEnt({t:'circle',c:P(pts[0]),r});commit();}pts=[];}else pts=[P(p)];break;
+    case 'circle2':if(pts.length){if(dist(pts[0],p)>1e-9){addEnt(circ2(pts[0],p));commit();}pts=[];}else pts=[P(p)];break;
+    case 'circle3':pts.push(P(p));if(pts.length===3){const c=circ3(...pts);if(c){addEnt(c);commit();}else setMsg('The three points are collinear; no circle created.');pts=[];}break;
+    case 'arc':pts.push(P(p));if(pts.length===3){const g=arc3(...pts);if(g){addEnt({t:'arc',c:g.c,r:g.r,a0:g.a0,a1:g.a1});commit();}else setMsg('The three points are collinear; no arc created.');pts=[];}break;
+    case 'arcsce':pts.push(P(p));if(pts.length===3){const a=arcSCE(...pts);if(a){addEnt(a);commit();}else setMsg('Invalid arc.');pts=[];}break;
+    case 'ellipse':pts.push(P(p));if(pts.length===3){const e=ellAxis(pts[0],pts[1],p);if(e){addEnt(e);commit();}else setMsg('Invalid ellipse.');pts=[];}break;
+    case 'ellipsec':pts.push(P(p));if(pts.length===3){const e=ellCenter(pts[0],pts[1],p);if(e){addEnt(e);commit();}else setMsg('Invalid ellipse.');pts=[];}break;
+    case 'point':addEnt({t:'point',p:P(p)});commit();break;
+    case 'xline':case 'ray':
+      if(!pts.length)pts=[P(p)];
+      else if(dist(pts[0],p)>1e-9){addEnt({t:tool,p:P(pts[0]),ang:Math.atan2(p.y-pts[0].y,p.x-pts[0].x)});commit();}
+      break;
+    case 'dist':if(pts.length){const a=pts[0],dx=p.x-a.x,dy=p.y-a.y;setMsg(`Distance ${fmt(Math.hypot(dx,dy))}  |  Δx ${fmt(dx)}  Δy ${fmt(dy)}  |  angle ${fmt(Math.atan2(dy,dx)*R2D)}°`);pts=[];}else pts=[P(p)];break;
+    case 'text':pendingText=P(p);setMsg('Type the text in the Command box and press Enter (Esc cancels).');$('cmd').focus();break;
     case 'dim':
       if(pts.length===1&&dist(pts[0],p)<1e-9)return;
-      pts.push({...p});
+      pts.push(P(p));
       if(pts.length===3){addEnt({t:'dim',a:pts[0],b:pts[1],o:pts[2],m:$('optDim').value,h:textH()});commit();pts=[];}
       break;
     case 'hatch':makeHatch(rawP());break;
-    case 'trim':trimPick(rawP());break;
+    case 'boundary':makeBoundary(rawP());break;
+    case 'trim':if(shiftDown)extendPick(rawP());else trimPick(rawP());break;
+    case 'extend':if(shiftDown)trimPick(rawP());else extendPick(rawP());break;
     case 'offset':offsetClick(rawP());break;
-    case 'mirror':if(!pts.length)pts=[{...p}];else doMirror(pts[0],p);break;
+    case 'break':breakClick(pend?p:rawP(),p);break;
+    case 'fillet':case 'chamfer':cornerClick(rawP());break;
+    case 'divide':divideClick(rawP(),'divide');break;
+    case 'meas':divideClick(rawP(),'meas');break;
+    case 'match':matchClick(rawP());break;
+    case 'mirror':if(!pts.length)pts=[P(p)];else doMirror(pts[0],p);break;
     case 'move':case 'copy':
-      if(!pts.length)pts=[{...p}];
+      if(!pts.length)pts=[P(p)];
       else{
         const dx=p.x-pts[0].x,dy=p.y-pts[0].y,f=q=>({x:q.x+dx,y:q.y+dy});
         if(tool==='move'){S.ents=S.ents.map(e=>sel.has(e.id)?xform(e,f,0):e);commit();pts=[];setTool('select');}
-        else{const ns=selEnts().map(e=>{const n=xform(e,f,0);n.id=S.next++;return n;});S.ents.push(...ns);commit();setMsg('Copied. Click another destination to continue, Esc to stop.');}
+        else{const ns=selEnts().map(e=>{const n=xform(e,f,0);n.id=S.next++;return n;});S.ents.push(...ns);commit();setMsg('Copied. Click another destination to continue, Enter to stop.');}
       }break;
     case 'rotate':
-      if(!pts.length)pts=[{...p}];
+      if(!pts.length)pts=[P(p)];
       else doRotate(pts[0],Math.atan2(p.y-pts[0].y,p.x-pts[0].x));
+      break;
+    case 'scale':
+      if(pts.length<2){pts.push(P(p));}
+      else{const k=scaleK(pts,p);doScale(pts[0],k);}
+      break;
+    case 'stretch':
+      if(!stretchWin)return;
+      if(!pts.length)pts=[P(p)];else doStretch(p.x-pts[0].x,p.y-pts[0].y);
+      break;
+    case 'arrayp':
+      if(!pts.length){pts=[P(p)];arrayDlg('polar');}
       break;
   }
   redraw();
 }
 
-/* ---------- Dòng lệnh ---------- */
+/* ---------- Command line ---------- */
 function parsePoint(s){
   const last=pts.length?pts[pts.length-1]:{x:0,y:0};let m;
   m=s.match(/^@\s*(-?[\d.]+)\s*<\s*(-?[\d.]+)$/);
@@ -810,37 +1822,101 @@ function parsePoint(s){
   }
   return null;
 }
-const ALIAS={select:'select',v:'select',pan:'pan',h:'pan',line:'line',l:'line',pline:'pl',pl:'pl',polyline:'pl',p:'pl',rect:'rect',rec:'rect',r:'rect',
-  circle:'circle',c:'circle',arc:'arc',a:'arc',dist:'measure',measure:'measure',d:'measure',move:'move',m:'move',copy:'copy',co:'copy',o:'copy',
-  rotate:'rotate',ro:'rotate',t:'rotate',erase:'erase',e:'erase',del:'erase',text:'text',txt:'text',n:'text',dim:'dim',i:'dim',hatch:'hatch',g:'hatch',
-  mirror:'mirror',mi:'mirror',s:'mirror',trim:'trim',tr:'trim',w:'trim',offset:'offset',of:'offset',f:'offset'};
+const cmdHist=[];let cmdHi=0;
+function numericInput(s){
+  const num=/^-?[\d.]+$/.test(s)?+s:null;
+  if(tool==='offset'&&num!==null&&num>0){$('optOff').value=s;setMsg('Offset distance = '+s);return true;}
+  if(tool==='fillet'&&!pend&&num!==null&&num>=0){$('optFR').value=s;setMsg('Fillet radius = '+s);return true;}
+  if(tool==='chamfer'&&!pend){
+    const m=s.match(/^([\d.]+)\s*[, ]\s*([\d.]+)$/);
+    if(m){$('optCD1').value=m[1];$('optCD2').value=m[2];setMsg(`Chamfer distances = ${m[1]}, ${m[2]}`);return true;}
+    if(num!==null&&num>=0){$('optCD1').value=s;$('optCD2').value=s;setMsg('Chamfer distance = '+s);return true;}
+  }
+  if(tool==='polygon'&&!pts.length&&num!==null&&num>=3){$('optPolyN').value=Math.round(num);setMsg('Polygon sides = '+Math.round(num));return true;}
+  if(tool==='rotate'&&pts.length===1&&num!==null){doRotate(pts[0],num/R2D);return true;}
+  if(tool==='scale'&&pts.length===1&&num!==null){doScale(pts[0],num);return true;}
+  if(tool==='circle'&&pts.length===1&&num!==null&&num>0){addEnt({t:'circle',c:{...pts[0]},r:num});commit();pts=[];return true;}
+  return false;
+}
+function runAction(s,arg){
+  switch(s){
+    case 'u':case 'undo':undo();return true;
+    case 'redo':redo();return true;
+    case 'z':case 'ze':case 'zoom':case 'fit':mode==='3d'?fit3():zoomExtents();return true;
+    case 'regen':case 're':redraw();return true;
+    case 'grid':toggle('grid');return true;
+    case 'snap':toggle('snap');return true;
+    case 'ortho':toggle('ortho');return true;
+    case 'osnap':toggle('osnap');return true;
+    case 'lwt':toggle('lwt');return true;
+    case 'all':S.ents.forEach(e=>{if(unlocked(e))sel.add(e.id);});refreshUI();redraw();return true;
+    case '3d':setMode('3d');return true;
+    case '2d':setMode('2d');return true;
+    case 'pickbox':{const v=parseFloat(arg);if(v>=1&&v<=50){PB=Math.round(v/2*2)/2;try{localStorage.setItem('minicad_pb',PB);}catch(_){}setMsg('Pickbox half-size = '+PB+' px');}else setMsg('Usage: pickbox 1–50 (current '+PB+')');redraw();return true;}
+    case 'cursor':{const v=parseFloat(arg);if(v>=3&&v<=3000){XH=v;setMsg('Crosshair size = '+v+' px');}else setMsg('Usage: cursor 3–3000 (current '+XH+')');redraw();return true;}
+    case 'layer':case 'la':{
+      const n=(arg||'').trim();if(!n){setMsg('Usage: layer <name> (sets the current layer, creates it if missing)');return true;}
+      if(!S.layers.some(l=>l.name===n))S.layers.push({name:n,color:'#ffffff',visible:true});
+      S.cur=n;commit();setMsg('Current layer: '+n);return true;
+    }
+  }
+  return false;
+}
 function runCmd(str){
-  if(mode==='3d'){cmd3(str);return;}
+  if($('dlg'))return;
   if(pendingText){
     const p=pendingText;pendingText=null;const t=str.replace(/\\n/g,'\n');
     if(t.trim()){addEnt({t:'text',p,s:t,h:textH(),rot:0});commit();setMsg('Text added. Click another position to add more.');}
     else setMsg('Text cancelled.');
     return;
   }
-  const s=str.trim().toLowerCase();
-  if(!s){if(tool==='pl')finish(false);return;}
-  if(s==='u'||s==='undo')return undo();
-  if(s==='redo')return redo();
-  if(s==='ze'||s==='zoom'||s==='fit')return zoomExtents();
-  if(s==='cl'||s==='close'){if(tool==='pl')finish(true);return;}
-  if(s==='grid'){toggle('grid');return;}
-  if(s==='snap'){toggle('snap');return;}
-  if(s==='ortho'){toggle('ortho');return;}
-  if(s==='all'){S.ents.forEach(e=>sel.add(e.id));refreshUI();redraw();return;}
-  if(ALIAS[s]){setTool(ALIAS[s]);return;}
-  if(tool==='offset'&&/^[\d.]+$/.test(s)){$('optOff').value=s;setMsg('Offset distance = '+s);return;}
-  if(tool==='rotate'&&pts.length===1&&/^-?[\d.]+$/.test(s)){doRotate(pts[0],+s/R2D);return;}
-  if(!drawingTool()){setMsg('Invalid command: '+str);return;}
+  const raw=str.trim(),s=raw.toLowerCase();
+  if(mode==='3d'){if(raw)logLine('Command: '+raw,'u');cmd3(str);return;}
+  if(!s){
+    if(phase==='sel'){finishSel();return;}
+    if(phase==='win'){setTool('select');return;}
+    if(tool==='select'){if(lastTool)setTool(lastTool);return;}
+    if(tool==='match'||tool==='point'||tool==='xline'||tool==='ray'||tool==='trim'||tool==='extend'||tool==='offset'||tool==='fillet'||tool==='chamfer'||tool==='break'||tool==='hatch'||tool==='boundary'||tool==='divide'||tool==='meas')return setTool('select');
+    return finish(false);
+  }
+  logLine('Command: '+raw,'u');
+  cmdHist.push(raw);cmdHi=cmdHist.length;
+  const w=s.split(/\s+/),head=w[0],arg=raw.slice(head.length).trim();
+  if(s==='cl'||s==='close'){if(tool==='pl'||tool==='spline')finish(true);return;}
+  if((s==='u'||s==='undo')&&(tool==='line'||tool==='pl'||tool==='spline')&&pts.length){
+    if(tool==='line'){
+      const li=S.ents[S.ents.length-1];
+      if(li&&li.t==='line'&&dist(li.b,pts[0])<1e-9){S.ents.pop();pts=[{...li.a}];commit();return;}
+      pts=[];return;
+    }
+    pts.pop();redraw();return;
+  }
+  if(numericInput(s))return;
+  if(runAction(head,arg))return;
+  if(ALIAS[head]&&!(w.length>1&&drawingTool())){setTool(ALIAS[head]);return;}
+  if(ALIAS3[head]&&!ALIAS[head]){
+    setMode('3d');cmd3(str);return;
+  }
+  if(!drawingTool()){setMsg('Unknown command: '+raw);return;}
   const p=parsePoint(s);
-  if(p){mouse.p=p;click(p);}else setMsg('Not understood: '+str);
+  if(p){mouse.p=p;click(p);}else setMsg('Not understood: '+raw);
 }
 
-/* ---------- Chuột ---------- */
+/* suggestions */
+let sugItems=[],sugSel=-1;
+function updSug(){
+  const el=$('sug'),q=$('cmd').value.trim().toLowerCase();
+  if(!q||/^[-@\d.,<\s]/.test(q)||pendingText||q.indexOf(' ')>0){el.style.display='none';sugItems=[];sugSel=-1;return;}
+  const seen=new Set(),list=cmdList().filter(c=>c.w.startsWith(q)&&!seen.has(c.w)&&seen.add(c.w));
+  list.sort((a,b)=>(a.w===q?-1:b.w===q?1:0)||a.w.length-b.w.length||a.w.localeCompare(b.w));
+  sugItems=list.slice(0,9);sugSel=-1;
+  el.innerHTML=sugItems.map((c,i)=>`<div data-i="${i}"><b>${esc(c.w.toUpperCase())}</b><span>${esc(c.d)}</span></div>`).join('');
+  el.style.display=sugItems.length?'block':'none';
+}
+function sugHighlight(){document.querySelectorAll('#sug div').forEach((d,i)=>d.classList.toggle('sel',i===sugSel));}
+function sugRun(i){const c=sugItems[i];if(!c)return;$('cmd').value='';updSug();runCmd(c.w);}
+
+/* ---------- Mouse ---------- */
 function pick(p,add){
   const e=pickEnt(p);
   if(!add)sel.clear();
@@ -851,7 +1927,7 @@ function boxSelect(d,add){
   const a=s2w(d.x0,d.y0),b=s2w(d.x1,d.y1),crossing=d.x1<d.x0;
   const bx={x0:Math.min(a.x,b.x),x1:Math.max(a.x,b.x),y0:Math.min(a.y,b.y),y1:Math.max(a.y,b.y)};
   if(!add)sel.clear();
-  for(const e of visEnts()){
+  for(const e of pickable()){
     const q=ebox(e);
     const inside=q.x0>=bx.x0&&q.x1<=bx.x1&&q.y0>=bx.y0&&q.y1<=bx.y1;
     const touch=!(q.x1<bx.x0||q.x0>bx.x1||q.y1<bx.y0||q.y0>bx.y1);
@@ -865,12 +1941,11 @@ cv.addEventListener('pointerdown',ev=>{
   cv.setPointerCapture(ev.pointerId);
   const q=pos(ev);
   if(document.activeElement===$('cmd'))$('cmd').blur();
-  if(ev.button===1||(ev.button===0&&(spaceDown||tool==='pan'))){pan={x:q.x,y:q.y,ox:view.ox,oy:view.oy};cv.style.cursor='grabbing';return;}
+  if(ev.button===1||(ev.button===0&&tool==='pan')){pan={x:q.x,y:q.y,ox:view.ox,oy:view.oy};cv.style.cursor='grabbing';return;}
   if(ev.button!==0)return;
   mouse.sx=q.x;mouse.sy=q.y;mouse.p=computeP(q.x,q.y);
-  if(tool==='select'){
-    const g=hitGrip(q);
-    if(g){gripDrag=g;return;}
+  if(tool==='select'||phase==='sel'||phase==='win'){
+    if(tool==='select'){const g=hitGrip(q);if(g){gripDrag=g;return;}}
     drag={x0:q.x,y0:q.y,x1:q.x,y1:q.y,moved:false};
   }else click(mouse.p);
 });
@@ -886,15 +1961,16 @@ cv.addEventListener('pointermove',ev=>{
 });
 cv.addEventListener('pointerup',ev=>{
   if(mode==='3d')return pu3(ev);
-  if(pan){pan=null;cv.style.cursor=tool==='pan'?'grab':'crosshair';return;}
+  if(pan){pan=null;cv.style.cursor=tool==='pan'?'grab':'none';return;}
   if(gripDrag){gripDrag=null;commit();return;}
   if(drag){
-    const add=ev.shiftKey;
-    if(drag.moved)boxSelect(drag,add);else pick(s2w(drag.x0,drag.y0),add);
-    drag=null;redraw();
+    const add=ev.shiftKey,d=drag;drag=null;
+    if(phase==='win'){if(d.moved)stretchWindow(d);else setMsg('Drag a crossing window (right → left) around the points to stretch.');}
+    else if(d.moved)boxSelect(d,add);else pick(s2w(d.x0,d.y0),add);
+    redraw();
   }
 });
-cv.addEventListener('contextmenu',ev=>{ev.preventDefault();if(mode==='3d')return;if(pts.length||offTgt||tool!=='select'){if(tool==='pl'&&pts.length>=2)finish(false);else cancel();}});
+cv.addEventListener('contextmenu',ev=>{ev.preventDefault();if(mode==='3d'){if(tool3==='subtract'&&sub3)finish3();return;}if(tool!=='select'||phase||pts.length)finish(false);});
 cv.addEventListener('wheel',ev=>{
   ev.preventDefault();
   if(mode==='3d'){cam.dist=Math.min(Math.max(cam.dist*Math.pow(1.0015,ev.deltaY),1),1e7);redraw();return;}
@@ -904,47 +1980,61 @@ cv.addEventListener('wheel',ev=>{
   mouse.p=computeP(q.x,q.y);redraw();
 },{passive:false});
 
-/* ---------- Bàn phím ---------- */
-const KEYTOOL={v:'select',h:'pan',l:'line',p:'pl',r:'rect',c:'circle',a:'arc',d:'measure',m:'move',o:'copy',t:'rotate',n:'text',i:'dim',g:'hatch',w:'trim',f:'offset',s:'mirror'};
+/* ---------- Keyboard ---------- */
 window.addEventListener('keydown',ev=>{
   if(ev.key==='Shift')shiftDown=true;
-  if(mode==='3d'&&key3d(ev))return;
-  const inInput=['INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName);
-  if(document.activeElement===$('cmd')){
-    if(ev.key==='Enter'){const v=$('cmd').value;$('cmd').value='';runCmd(v);ev.preventDefault();}
-    else if(ev.key==='Escape'){$('cmd').value='';pendingText=null;$('cmd').blur();}
+  if($('dlg'))return;
+  const cmd=$('cmd'),inCmd=document.activeElement===cmd;
+  if(inCmd){
+    const k=ev.key;
+    if(k==='Enter'){
+      if(sugSel>=0){sugRun(sugSel);ev.preventDefault();return;}
+      const v=cmd.value;cmd.value='';updSug();runCmd(v);ev.preventDefault();
+    }
+    else if(k===' '&&!pendingText){
+      const v=cmd.value.trim().toLowerCase(),w=v.split(/\s+/)[0];
+      if(!v||/^[-@\d.,<]+$/.test(v)||ALIAS[v]||ALIAS3[v]||ACTS.some(a=>a[0]===v)||v==='cl'){ev.preventDefault();const t=cmd.value;cmd.value='';updSug();runCmd(t);}
+    }
+    else if(k==='Escape'){cmd.value='';updSug();pendingText=null;cmd.blur();}
+    else if(k==='ArrowDown'||k==='ArrowUp'){
+      ev.preventDefault();
+      if(sugItems.length){const n=sugItems.length;sugSel=k==='ArrowDown'?(sugSel+1>=n?-1:sugSel+1):(sugSel-1<-1?n-1:sugSel-1);sugHighlight();}
+      else if(cmdHist.length){cmdHi=Math.max(0,Math.min(cmdHist.length,cmdHi+(k==='ArrowUp'?-1:1)));cmd.value=cmdHist[cmdHi]||'';}
+    }
+    else if(k==='Tab'){ev.preventDefault();const c=sugItems[sugSel>=0?sugSel:0];if(c){cmd.value=c.w;updSug();}}
     return;
   }
+  const inInput=['INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName);
   if(inInput)return;
+  if(mode==='3d'&&key3d(ev))return;
   const k=ev.key.toLowerCase();
   if(ev.ctrlKey||ev.metaKey){
     if(k==='z'){ev.preventDefault();ev.shiftKey?redo():undo();}
     else if(k==='y'){ev.preventDefault();redo();}
-    else if(k==='a'){ev.preventDefault();S.ents.forEach(e=>sel.add(e.id));refreshUI();redraw();}
+    else if(k==='a'){ev.preventDefault();if(mode==='3d')S.solids.forEach(s=>sel3.add(s.id));else S.ents.forEach(e=>{if(unlocked(e))sel.add(e.id);});refreshUI();redraw();}
     else if(k==='s'){ev.preventDefault();exportJSON();}
     return;
   }
-  if(ev.key===' '){spaceDown=true;ev.preventDefault();return;}
-  if(ev.key==='Escape')return cancel();
-  if(ev.key==='Enter'){ev.preventDefault();return finish(false);}
-  if(ev.key==='Delete'||ev.key==='Backspace'){ev.preventDefault();return eraseSel();}
+  if(ev.key==='Escape')return mode==='3d'?cancel3():cancel();
+  if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();return mode==='3d'?enter3():runCmd('');}
+  if(ev.key==='Delete'||ev.key==='Backspace'){ev.preventDefault();return mode==='3d'?del3():eraseSel();}
   if(ev.key==='F3'){ev.preventDefault();return toggle('snap');}
   if(ev.key==='F4'){ev.preventDefault();return toggle('osnap');}
   if(ev.key==='F7'){ev.preventDefault();return toggle('grid');}
   if(ev.key==='F8'){ev.preventDefault();return toggle('ortho');}
-  if(/^[0-9@\-.,<]$/.test(ev.key)){ev.preventDefault();$('cmd').focus();$('cmd').value+=ev.key;return;}
-  if(KEYTOOL[k])setTool(KEYTOOL[k]);
+  if(ev.key.length===1&&!ev.altKey&&/[a-z0-9@\-.,<_]/i.test(ev.key)){ev.preventDefault();cmd.focus();cmd.value+=ev.key;updSug();}
 });
-window.addEventListener('keyup',ev=>{if(ev.key==='Shift')shiftDown=false;if(ev.key===' ')spaceDown=false;});
+window.addEventListener('keyup',ev=>{if(ev.key==='Shift')shiftDown=false;});
 
-/* ---------- Giao diện ---------- */
+
+/* ---------- UI ---------- */
 function toggle(k){opt[k]=!opt[k];updToggles();redraw();}
 function updToggles(){
   $('tGrid').classList.toggle('on',opt.grid);$('tSnap').classList.toggle('on',opt.snap);
-  $('tOsnap').classList.toggle('on',opt.osnap);$('tOrtho').classList.toggle('on',opt.ortho);
+  $('tOsnap').classList.toggle('on',opt.osnap);$('tOrtho').classList.toggle('on',opt.ortho);$('tLwt').classList.toggle('on',opt.lwt);
 }
 $('tGrid').onclick=()=>toggle('grid');$('tSnap').onclick=()=>toggle('snap');
-$('tOsnap').onclick=()=>toggle('osnap');$('tOrtho').onclick=()=>toggle('ortho');
+$('tOsnap').onclick=()=>toggle('osnap');$('tOrtho').onclick=()=>toggle('ortho');$('tLwt').onclick=()=>toggle('lwt');
 
 function describe(e){
   if(e.t==='line')return'Line';
@@ -952,6 +2042,12 @@ function describe(e){
     return`${e.closed?'Closed polyline':'Polyline'}: ${e.p.length} vertices<br>${e.closed?'Perimeter':'Length'}: <b>${fmt(L)}</b>`+(e.closed?`<br>Area: <b>${fmt(area(e.p))}</b>`:'');}
   if(e.t==='circle')return`Circle<br>Circumference: <b>${fmt(TAU*e.r)}</b> · Area: <b>${fmt(Math.PI*e.r*e.r)}</b>`;
   if(e.t==='arc'){const sw=nrm(e.a1-e.a0);return`Arc<br>Sweep: <b>${fmt(sw*R2D)}°</b> · Arc length: <b>${fmt(sw*e.r)}</b>`;}
+  if(e.t==='ellipse'){const a=e.rx,b=e.ry,h=((a-b)/(a+b))**2,per=Math.PI*(a+b)*(1+3*h/(10+Math.sqrt(4-3*h)));return`Ellipse<br>Area: <b>${fmt(Math.PI*a*b)}</b> · Perimeter ≈ <b>${fmt(per)}</b>`;}
+  if(e.t==='spline'){const c=curveOf(e);return`Spline: ${e.p.length} fit points<br>Length: <b>${fmt(pathLen(c.p,c.closed))}</b>`;}
+  if(e.t==='point')return`Point<br>X ${fmt(e.p.x)}  Y ${fmt(e.p.y)}`;
+  if(e.t==='xline')return'Construction line (infinite)';
+  if(e.t==='ray')return'Ray (semi-infinite)';
+  if(e.t==='region'){let a=0;e.loops.forEach((l,i)=>{a+=(i?-1:1)*area(l);});return`Region: ${e.loops.length-1} hole(s)<br>Area: <b>${fmt(a)}</b>`;}
   if(e.t==='text')return'Text';
   if(e.t==='dim')return`Dimension: <b>${fmt(dimParts(e).val)}</b>`;
   if(e.t==='hatch'){let a=0;e.loops.forEach((l,i)=>{a+=(i?-1:1)*area(l);});return`Hatch<br>Region area: <b>${fmt(a)}</b>`;}
@@ -974,7 +2070,12 @@ function propRows(e){
       N('Center x',()=>e.c.x,v=>{e.c={x:v,y:e.c.y};});N('Center y',()=>e.c.y,v=>{e.c={x:e.c.x,y:v};});
       N('Radius',()=>e.r,v=>{if(v>0)e.r=v;});
       N('Start angle (°)',()=>e.a0*R2D,v=>{e.a0=v/R2D;});N('End angle (°)',()=>e.a1*R2D,v=>{e.a1=v/R2D;});break;
-    case 'pl':SEL('Shape',()=>e.closed?'1':'0',v=>{e.closed=v==='1';},[['0','Open'],['1','Closed']]);break;
+    case 'ellipse':
+      N('Center x',()=>e.c.x,v=>{e.c={x:v,y:e.c.y};});N('Center y',()=>e.c.y,v=>{e.c={x:e.c.x,y:v};});
+      N('Semi-axis 1',()=>e.rx,v=>{if(v>0)e.rx=v;});N('Semi-axis 2',()=>e.ry,v=>{if(v>0)e.ry=v;});N('Rotation (°)',()=>(e.rot||0)*R2D,v=>{e.rot=v/R2D;});break;
+    case 'pl':case 'spline':SEL('Shape',()=>e.closed?'1':'0',v=>{e.closed=v==='1';},[['0','Open'],['1','Closed']]);break;
+    case 'point':N('X',()=>e.p.x,v=>{e.p={x:v,y:e.p.y};});N('Y',()=>e.p.y,v=>{e.p={x:e.p.x,y:v};});break;
+    case 'xline':case 'ray':N('X',()=>e.p.x,v=>{e.p={x:v,y:e.p.y};});N('Y',()=>e.p.y,v=>{e.p={x:e.p.x,y:v};});N('Angle (°)',()=>e.ang*R2D,v=>{e.ang=v/R2D;});break;
     case 'text':
       T('Content',()=>e.s,v=>{e.s=v;});
       N('Text height',()=>e.h,v=>{if(v>0)e.h=v;});N('Rotation (°)',()=>(e.rot||0)*R2D,v=>{e.rot=v/R2D;});
@@ -987,17 +2088,47 @@ function propRows(e){
   }
   return R;
 }
+function selRow(P,label,opts,cur,fn){
+  const row=document.createElement('div');row.className='prow';
+  const lab=document.createElement('label');lab.textContent=label;
+  const s=document.createElement('select');s.innerHTML=opts.map(o=>`<option value="${esc(o[0])}">${esc(o[1])}</option>`).join('');
+  s.value=cur;s.onchange=()=>fn(s.value);row.append(lab,s);P.appendChild(row);return s;
+}
+function commonRows(P,es){
+  const same=f=>es.every(e=>f(e)===f(es[0]))?f(es[0]):'~';
+  const vary=[['~','(varies)']];
+  selRow(P,'Layer',[...S.layers.map(l=>[l.name,l.name]),...vary],same(e=>e.layer),v=>{if(v==='~')return;es.forEach(e=>e.layer=v);sel=new Set([...sel].filter(id=>{const e=S.ents.find(x=>x.id===id);return e&&unlocked(e);}));commit();});
+  const cv0=same(e=>e.col||''),colOpts=[['','ByLayer'],...PCOLS];
+  if(cv0!==''&&cv0!=='~'&&!PCOLS.some(c=>c[0]===cv0))colOpts.push([cv0,cv0]);
+  selRow(P,'Color',[...colOpts,...vary],cv0,v=>{if(v==='~')return;es.forEach(e=>{if(v)e.col=v;else delete e.col;});commit();});
+  selRow(P,'Linetype',[['','ByLayer'],...Object.keys(LT).map(k=>[k,LTN[k]]),...vary],same(e=>e.lt||''),v=>{if(v==='~')return;es.forEach(e=>{if(v)e.lt=v;else delete e.lt;});commit();});
+  const lwv=same(e=>e.lw==null?'':String(e.lw)),lwOpts=[['','ByLayer'],...LWS.map(w=>[String(w),w+' mm'])];
+  if(lwv!==''&&lwv!=='~'&&!LWS.some(w=>String(w)===lwv))lwOpts.push([lwv,lwv+' mm']);
+  selRow(P,'Lineweight',[...lwOpts,...vary],lwv,v=>{if(v==='~')return;es.forEach(e=>{if(v!=='')e.lw=+v;else delete e.lw;});commit();});
+}
 function refreshUI(){
   const L=$('layers');L.innerHTML='';
+  const LTO=Object.keys(LT).map(k=>`<option value="${k}">${LTN[k]}</option>`).join(''),LWO=LWS.map(w=>`<option value="${w}">${w}</option>`).join('');
   S.layers.forEach(l=>{
     const d=document.createElement('div');d.className='layer'+(l.name===S.cur?' cur':'');
-    const cb=document.createElement('input');cb.type='checkbox';cb.checked=l.visible;cb.title='Show/hide';
-    cb.onclick=ev=>{ev.stopPropagation();l.visible=cb.checked;save();redraw();};
-    const col=document.createElement('input');col.type='color';col.value=l.color;
-    col.onclick=ev=>ev.stopPropagation();
-    col.onchange=()=>{l.color=col.value;commit();redraw();};
-    const nm=document.createElement('span');nm.textContent=l.name;
-    d.append(cb,col,nm);d.onclick=()=>{S.cur=l.name;refreshUI();};
+    const mk=(txt,title,on,fn)=>{const b=document.createElement('button');b.className='lb'+(on?' on':'');b.textContent=txt;b.title=title;b.onclick=ev=>{ev.stopPropagation();fn();};return b;};
+    const vis=mk(l.visible?'●':'○','Turn on / off',l.visible,()=>{l.visible=!l.visible;commit();});
+    const frz=mk('❄','Freeze / thaw',!!l.frozen,()=>{l.frozen=!l.frozen;commit();});
+    const lck=mk(l.locked?'🔒':'🔓','Lock / unlock (locked layers cannot be selected)',!!l.locked,()=>{l.locked=!l.locked;sel=new Set([...sel].filter(id=>{const e=S.ents.find(x=>x.id===id);return e&&unlocked(e);}));commit();});
+    const col=document.createElement('input');col.type='color';col.value=l.color;col.title='Layer color';
+    col.onclick=ev=>ev.stopPropagation();col.onchange=()=>{l.color=col.value;commit();};
+    const nm=document.createElement('span');nm.textContent=l.name;nm.title='Click: make current · Double-click: rename';
+    nm.ondblclick=ev=>{
+      ev.stopPropagation();if(l.name==='0'){setMsg('Layer 0 cannot be renamed.');return;}
+      const n=(prompt('Rename layer:',l.name)||'').trim();if(!n||n===l.name)return;
+      if(S.layers.some(x=>x.name===n)){setMsg('A layer with that name already exists.');return;}
+      S.ents.forEach(e=>{if(e.layer===l.name)e.layer=n;});if(S.cur===l.name)S.cur=n;l.name=n;commit();
+    };
+    const lt=document.createElement('select');lt.innerHTML=LTO;lt.value=l.lt||'continuous';lt.title='Layer linetype';
+    lt.onclick=ev=>ev.stopPropagation();lt.onchange=()=>{l.lt=lt.value;commit();};
+    const lw=document.createElement('select');lw.innerHTML=LWO;lw.value=String(l.lw!=null?l.lw:0.25);lw.title='Layer lineweight (mm)';
+    lw.onclick=ev=>ev.stopPropagation();lw.onchange=()=>{l.lw=+lw.value;commit();};
+    d.append(vis,frz,lck,col,nm,lt,lw);d.onclick=()=>{S.cur=l.name;refreshUI();};
     L.appendChild(d);
   });
   const P=$('props'),es=selEnts();
@@ -1005,10 +2136,7 @@ function refreshUI(){
   else if(!es.length)P.innerHTML='Nothing selected.<br>Current layer: <b>'+esc(S.cur)+'</b><br>Total: <b>'+S.ents.length+'</b> objects';
   else{
     P.innerHTML=`Selected: <b>${es.length}</b> object(s)`+(es.length===1?'<br>'+describe(es[0]):'')+'<div style="height:6px"></div>';
-    const lr=document.createElement('div');lr.className='prow';
-    lr.innerHTML='<label>Layer</label><select id="selLayer">'+S.layers.map(l=>`<option${es.every(e=>e.layer===l.name)&&es[0].layer===l.name?' selected':''}>${esc(l.name)}</option>`).join('')+'</select>';
-    P.appendChild(lr);
-    lr.querySelector('select').onchange=ev=>{es.forEach(e=>e.layer=ev.target.value);commit();redraw();};
+    commonRows(P,es);
     if(es.length===1){
       for(const r of propRows(es[0])){
         const row=document.createElement('div');row.className='prow'+(r.k==='ta'?' full':'');
@@ -1027,6 +2155,7 @@ function refreshUI(){
     }
   }
   $('bUndo').style.opacity=hi<=0?.4:1;$('bRedo').style.opacity=hi>=hist.length-1?.4:1;
+  syncCurProps();
   redraw();
 }
 $('bAddL').onclick=()=>{
@@ -1040,7 +2169,6 @@ $('bDelL').onclick=()=>{
   S.ents.forEach(e=>{if(e.layer===S.cur)e.layer='0';});
   S.layers=S.layers.filter(l=>l.name!==S.cur);S.cur='0';commit();
 };
-
 /* ---------- Zoom ---------- */
 function zoomExtents(){
   const W=cv.clientWidth,H=cv.clientHeight,b=bboxAll(visEnts());
@@ -1052,20 +2180,21 @@ function zoomExtents(){
 }
 $('bFit').onclick=()=>mode==='3d'?fit3():zoomExtents();$('bUndo').onclick=undo;$('bRedo').onclick=redo;
 
-/* ---------- Xuất ---------- */
+
+/* ---------- Export ---------- */
 function dl(name,data,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);}
 function exportJSON(){dl('drawing.json',snapshot(),'application/json');}
 $('bSave').onclick=exportJSON;
 $('bNew').onclick=()=>{
   if(S.ents.length&&!confirm('Start a new drawing? The current one will be cleared (Save JSON first).'))return;
-  S={ents:[],layers:[{name:'0',color:'#ffffff',visible:true}],cur:'0',next:1,solids:[]};sel.clear();pts=[];commit();zoomExtents();
+  S={ents:[],layers:[{name:'0',color:'#ffffff',visible:true}],cur:'0',next:1,solids:[],curCol:'',curLt:'',curLw:''};sel.clear();pts=[];commit();zoomExtents();
 };
 $('bOpen').onclick=()=>$('file').click();
 $('file').onchange=ev=>{
   const f=ev.target.files[0];if(!f)return;
   const r=new FileReader();
   r.onload=()=>{try{const o=JSON.parse(r.result);if(!Array.isArray(o.ents)||!Array.isArray(o.layers))throw 0;
-    S={ents:o.ents,layers:o.layers.length?o.layers:[{name:'0',color:'#ffffff',visible:true}],cur:o.cur||'0',next:o.next||o.ents.length+1,solids:o.solids||[]};
+    S={ents:o.ents,layers:o.layers.length?o.layers:[{name:'0',color:'#ffffff',visible:true}],cur:o.cur||'0',next:o.next||o.ents.length+1,solids:o.solids||[],curCol:o.curCol||'',curLt:o.curLt||'',curLw:o.curLw==null?'':o.curLw};
     sel.clear();pts=[];commit();zoomExtents();setMsg('Opened '+f.name);}catch(_){setMsg('Invalid file.');}};
   r.readAsText(f);ev.target.value='';
 };
@@ -1074,16 +2203,22 @@ function toSVG(){
   const es=visEnts(),b=bboxAll(es)||{x0:0,y0:0,x1:100,y1:100};
   const pad=Math.max(b.x1-b.x0,b.y1-b.y0,1)*0.05;
   const vx=b.x0-pad,vy=-b.y1-pad,vw=b.x1-b.x0+2*pad,vh=b.y1-b.y0+2*pad;
-  const k=1600/Math.max(vw,vh),P=p=>`${p.x},${-p.y}`;
+  const k=1600/Math.max(vw,vh),P=p=>`${p.x},${-p.y}`,BIG=(vw+vh)*3;
   const svgText=(t,col)=>`<text transform="translate(${t.p.x} ${-t.p.y}) rotate(${-(t.rot||0)*R2D})" font-size="${t.h}" font-family="sans-serif" fill="${col}" text-anchor="${t.c?'middle':'start'}">`+String(t.s).split('\n').map((l,i)=>`<tspan x="0" y="${i*t.h*1.2}">${esc(l)}</tspan>`).join('')+'</text>';
   let o=`<svg xmlns="http://www.w3.org/2000/svg" width="${Math.round(vw*k)}" height="${Math.round(vh*k)}" viewBox="${vx} ${vy} ${vw} ${vh}"><rect x="${vx}" y="${vy}" width="${vw}" height="${vh}" fill="#fff"/>`;
   for(const e of es){
-    const col=exCol(layerOf(e.layer).color),st=`fill="none" stroke="${col}" stroke-width="1.5" vector-effect="non-scaling-stroke"`;
+    const col=exCol(effCol(e)),dash=dashOf(e);
+    const st=`fill="none" stroke="${col}" stroke-width="${lwPx(e).toFixed(2)}"${dash.length?` stroke-dasharray="${dash.join(' ')}"`:''} vector-effect="non-scaling-stroke"`;
     if(e.t==='line')o+=`<line x1="${e.a.x}" y1="${-e.a.y}" x2="${e.b.x}" y2="${-e.b.y}" ${st}/>`;
     else if(e.t==='pl')o+=`<${e.closed?'polygon':'polyline'} points="${e.p.map(P).join(' ')}" ${st}/>`;
     else if(e.t==='circle')o+=`<circle cx="${e.c.x}" cy="${-e.c.y}" r="${e.r}" ${st}/>`;
     else if(e.t==='arc'){const s=pt(e.c,e.r,e.a0),t=pt(e.c,e.r,e.a1),sw=nrm(e.a1-e.a0);
       o+=`<path d="M${s.x},${-s.y} A${e.r},${e.r} 0 ${sw>Math.PI?1:0} 0 ${t.x},${-t.y}" ${st}/>`;}
+    else if(e.t==='ellipse')o+=`<ellipse cx="${e.c.x}" cy="${-e.c.y}" rx="${e.rx}" ry="${e.ry}" transform="rotate(${-(e.rot||0)*R2D} ${e.c.x} ${-e.c.y})" ${st}/>`;
+    else if(e.t==='spline'){const c=curveOf(e);o+=`<${c.closed?'polygon':'polyline'} points="${c.p.map(P).join(' ')}" ${st}/>`;}
+    else if(e.t==='point')o+=`<circle cx="${e.p.x}" cy="${-e.p.y}" r="${3/k}" fill="${col}"/>`;
+    else if(e.t==='xline'||e.t==='ray'){const dx=Math.cos(e.ang),dy=Math.sin(e.ang),a=e.t==='ray'?e.p:{x:e.p.x-dx*BIG,y:e.p.y-dy*BIG};o+=`<line x1="${a.x}" y1="${-a.y}" x2="${e.p.x+dx*BIG}" y2="${-(e.p.y+dy*BIG)}" ${st}/>`;}
+    else if(e.t==='region')o+=`<path d="${e.loops.map(l=>'M'+l.map(P).join(' L')+' Z').join(' ')}" fill="${col}" fill-opacity=".16" fill-rule="evenodd" stroke="${col}" stroke-width="${lwPx(e).toFixed(2)}" vector-effect="non-scaling-stroke"/>`;
     else if(e.t==='text')o+=svgText(e,col);
     else if(e.t==='dim'){const d=dimParts(e);
       o+=`<path d="${d.lines.map(([a,b])=>`M${P(a)} L${P(b)}`).join(' ')}" ${st}/>`;
@@ -1101,29 +2236,61 @@ $('bPNG').onclick=()=>{
   img.onload=()=>{const c=document.createElement('canvas');c.width=img.width;c.height=img.height;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(img,0,0);c.toBlob(b=>dl('drawing.png',b,'image/png'));};
   img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
 };
+const DXLT={continuous:{n:'CONTINUOUS',d:'Solid line',p:[]},dashed:{n:'DASHED',d:'Dashed __ __ __',p:[12.7,-6.35]},hidden:{n:'HIDDEN',d:'Hidden __ __ __',p:[6.35,-3.175]},center:{n:'CENTER',d:'Center ____ _ ____ _',p:[31.75,-6.35,6.35,-6.35]},phantom:{n:'PHANTOM',d:'Phantom ___ _ _ ___',p:[31.75,-6.35,6.35,-6.35,6.35,-6.35]},dot:{n:'DOT',d:'Dot . . . .',p:[0,-6.35]},dashdot:{n:'DASHDOT',d:'Dash dot __ . __ .',p:[12.7,-6.35,0,-6.35]}};
+const rgbInt=h=>parseInt(h.replace('#',''),16)||0;
+function nearACI(h){
+  const c=[[1,'#ff0000'],[2,'#ffff00'],[3,'#00ff00'],[4,'#00ffff'],[5,'#0000ff'],[6,'#ff00ff'],[7,'#ffffff']];
+  const [r,g,b]=[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));let best=7,bd=1e9;
+  for(const[n,x]of c){const d=(r-parseInt(x.slice(1,3),16))**2+(g-parseInt(x.slice(3,5),16))**2+(b-parseInt(x.slice(5,7),16))**2;if(d<bd){bd=d;best=n;}}
+  return best;
+}
 function toDXF(){
   const o=[],g=(c,v)=>o.push(c,v);
   g(0,'SECTION');g(2,'HEADER');g(9,'$ACADVER');g(1,'AC1015');g(0,'ENDSEC');
-  g(0,'SECTION');g(2,'TABLES');g(0,'TABLE');g(2,'LAYER');g(70,S.layers.length);
-  S.layers.forEach(l=>{g(0,'LAYER');g(2,l.name);g(70,0);g(62,7);g(6,'CONTINUOUS');});
+  g(0,'SECTION');g(2,'TABLES');
+  g(0,'TABLE');g(2,'LTYPE');g(70,Object.keys(DXLT).length);
+  for(const k in DXLT){const L=DXLT[k];g(0,'LTYPE');g(2,L.n);g(70,0);g(3,L.d);g(72,65);g(73,L.p.length);g(40,L.p.reduce((a,v)=>a+Math.abs(v),0));L.p.forEach(v=>{g(49,v);g(74,0);});}
+  g(0,'ENDTAB');
+  g(0,'TABLE');g(2,'LAYER');g(70,S.layers.length);
+  S.layers.forEach(l=>{
+    g(0,'LAYER');g(2,l.name);g(70,(l.frozen?1:0)|(l.locked?4:0));
+    g(62,(l.visible?1:-1)*nearACI(l.color));g(420,rgbInt(l.color));g(6,(DXLT[l.lt||'continuous']||DXLT.continuous).n);g(370,Math.round((l.lw!=null?l.lw:0.25)*100));
+  });
   g(0,'ENDTAB');g(0,'ENDSEC');
   g(0,'SECTION');g(2,'ENTITIES');
-  const line=(L,a,b)=>{g(0,'LINE');g(8,L);g(10,a.x);g(20,a.y);g(11,b.x);g(21,b.y);};
-  const poly=(L,P,closed)=>{g(0,'LWPOLYLINE');g(8,L);g(90,P.length);g(70,closed?1:0);P.forEach(q=>{g(10,q.x);g(20,q.y);});};
+  let cur=null;
+  const base=(type,L)=>{
+    g(0,type);g(8,L);
+    if(cur){
+      if(cur.col){g(62,nearACI(cur.col));g(420,rgbInt(cur.col));}
+      if(cur.lt)g(6,(DXLT[cur.lt]||DXLT.continuous).n);
+      if(cur.lw!=null)g(370,Math.round(cur.lw*100));
+    }
+  };
+  const line=(L,a,b)=>{base('LINE',L);g(10,a.x);g(20,a.y);g(11,b.x);g(21,b.y);};
+  const poly=(L,P,closed)=>{base('LWPOLYLINE',L);g(90,P.length);g(70,closed?1:0);P.forEach(q=>{g(10,q.x);g(20,q.y);});};
   const text=(L,t)=>{
     const lines=String(t.s).split('\n'),a=t.rot||0,co=Math.cos(a),si=Math.sin(a);
     lines.forEach((ln,i)=>{
       const dy=-i*t.h*1.2,p={x:t.p.x-dy*0+(-si*dy),y:t.p.y+co*dy};
-      g(0,'TEXT');g(8,L);g(10,p.x);g(20,p.y);g(40,t.h);g(1,ln);g(50,a*R2D);
+      base('TEXT',L);g(10,p.x);g(20,p.y);g(40,t.h);g(1,ln);g(50,a*R2D);
       if(t.c){g(72,1);g(11,p.x);g(21,p.y);}
     });
   };
   for(const e of S.ents){
-    const L=e.layer;
+    const L=e.layer;cur=e;
     if(e.t==='line')line(L,e.a,e.b);
     else if(e.t==='pl')poly(L,e.p,e.closed);
-    else if(e.t==='circle'){g(0,'CIRCLE');g(8,L);g(10,e.c.x);g(20,e.c.y);g(40,e.r);}
-    else if(e.t==='arc'){g(0,'ARC');g(8,L);g(10,e.c.x);g(20,e.c.y);g(40,e.r);g(50,nrm(e.a0)*R2D);g(51,nrm(e.a1)*R2D);}
+    else if(e.t==='circle'){base('CIRCLE',L);g(10,e.c.x);g(20,e.c.y);g(40,e.r);}
+    else if(e.t==='arc'){base('ARC',L);g(10,e.c.x);g(20,e.c.y);g(40,e.r);g(50,nrm(e.a0)*R2D);g(51,nrm(e.a1)*R2D);}
+    else if(e.t==='ellipse'){
+      const a=e.rot||0,mx=e.rx*Math.cos(a),my=e.rx*Math.sin(a);
+      base('ELLIPSE',L);g(10,e.c.x);g(20,e.c.y);g(30,0);g(11,mx);g(21,my);g(31,0);g(210,0);g(220,0);g(230,1);g(40,e.ry/e.rx);g(41,0);g(42,TAU);
+    }
+    else if(e.t==='spline'){const c=curveOf(e);poly(L,c.p,c.closed);}
+    else if(e.t==='point'){base('POINT',L);g(10,e.p.x);g(20,e.p.y);g(30,0);}
+    else if(e.t==='xline'||e.t==='ray'){base(e.t==='xline'?'XLINE':'RAY',L);g(10,e.p.x);g(20,e.p.y);g(30,0);g(11,Math.cos(e.ang));g(21,Math.sin(e.ang));g(31,0);}
+    else if(e.t==='region')e.loops.forEach(l=>poly(L,l,true));
     else if(e.t==='text')text(L,e);
     else if(e.t==='dim'){const d=dimParts(e);d.lines.forEach(([a,b])=>line(L,a,b));d.arrows.forEach(t=>poly(L,t,true));if(d.text)text(L,d.text);}
     else if(e.t==='hatch'){if(e.pat==='solid')e.loops.forEach(l=>poly(L,l,true));else hatchSegs(e).forEach(([a,b])=>line(L,a,b));}
@@ -1133,7 +2300,7 @@ function toDXF(){
 }
 $('bDXF').onclick=()=>dl('drawing.dxf',toDXF(),'application/dxf');
 
-/* ---------- Nhập DXF ---------- */
+/* ---------- DXF import ---------- */
 function hsv(h,s,v){const f=n=>{const k=(n+h/60)%6;return v-v*s*Math.max(Math.min(k,4-k,1),0);};const x=c=>Math.round(c*255).toString(16).padStart(2,'0');return'#'+x(f(5))+x(f(3))+x(f(1));}
 const ACI={1:'#ff0000',2:'#ffff00',3:'#00ff00',4:'#00ffff',5:'#0000ff',6:'#ff00ff',7:'#ffffff',8:'#808080',9:'#c0c0c0'};
 function aciColor(n){
@@ -1141,6 +2308,17 @@ function aciColor(n){
   if(n>=250&&n<=255){const h=Math.round(51+(n-250)*(204/5)).toString(16).padStart(2,'0');return'#'+h+h+h;}
   if(n>=10&&n<=249){const k=n-10,i=k%10;return hsv(Math.floor(k/10)*15,i%2?0.5:1,[1,1,.65,.65,.5,.5,.3,.3,.15,.15][i]);}
   return'#ffffff';
+}
+function ltFromName(s){
+  s=(s||'').toUpperCase();
+  if(!s||s==='BYLAYER'||s==='BYBLOCK'||s==='CONTINUOUS')return'';
+  if(/DASHDOT/.test(s))return'dashdot';if(/HIDDEN/.test(s))return'hidden';if(/CENTER/.test(s))return'center';
+  if(/PHANTOM/.test(s))return'phantom';if(/DOT/.test(s))return'dot';if(/DASH/.test(s))return'dashed';
+  return'';
+}
+function lwFromCode(v){
+  if(!(v>0))return null;
+  const mm=v/100;let best=LWS[0];for(const w of LWS)if(Math.abs(w-mm)<Math.abs(best-mm))best=w;return best;
 }
 function parseDXF(txt){
   const L=txt.split('\n'),recs=[];let cur=null;
@@ -1152,6 +2330,7 @@ function parseDXF(txt){
   const layers=[],ents=[],skipped={};let sec='';
   const num=(r,c,def=0)=>{const f=r.d.find(x=>x[0]===c);const v=f?parseFloat(f[1]):def;return isNaN(v)?def:v;};
   const str=(r,c,def='')=>{const f=r.d.find(x=>x[0]===c);return f?f[1].trim():def;};
+  const has=(r,c)=>r.d.some(x=>x[0]===c);
   const clean=s=>s.replace(/\\P/g,'\n').replace(/\\[A-Za-z][^;]*;/g,'').replace(/[{}]/g,'').replace(/%%[cC]/g,'Ø').replace(/%%[dD]/g,'°').replace(/%%[pP]/g,'±').replace(/%%[uUoO]/g,'');
   const addPoly=(vs,closed,layer)=>{
     if(!vs.some(v=>Math.abs(v.b)>1e-9)){if(vs.length>=2)ents.push({t:'pl',p:vs.map(v=>({x:v.x,y:v.y})),closed,layer});return;}
@@ -1170,13 +2349,21 @@ function parseDXF(txt){
     const r=recs[i];
     if(r.type==='SECTION'){sec=str(r,2);continue;}
     if(r.type==='ENDSEC'){sec='';continue;}
-    if(sec==='TABLES'&&r.type==='LAYER'){const c=num(r,62,7);layers.push({name:str(r,2),color:aciColor(c),visible:c>=0});continue;}
+    if(sec==='TABLES'&&r.type==='LAYER'){
+      const c=num(r,62,7),fl=num(r,70,0),lay={name:str(r,2),color:has(r,420)?'#'+Math.round(num(r,420)).toString(16).padStart(6,'0'):aciColor(c),visible:c>=0};
+      if(fl&1)lay.frozen=true;if(fl&4)lay.locked=true;
+      const lt=ltFromName(str(r,6));if(lt)lay.lt=lt;const lw=lwFromCode(num(r,370,-3));if(lw!=null)lay.lw=lw;
+      layers.push(lay);continue;
+    }
     if(sec!=='ENTITIES')continue;
-    const layer=str(r,8,'0'),add=e=>{e.layer=layer;ents.push(e);};
+    const layer=str(r,8,'0'),n0=ents.length;
+    const add=e=>{e.layer=layer;ents.push(e);};
     switch(r.type){
       case 'LINE':add({t:'line',a:{x:num(r,10),y:num(r,20)},b:{x:num(r,11),y:num(r,21)}});break;
       case 'CIRCLE':add({t:'circle',c:{x:num(r,10),y:num(r,20)},r:num(r,40)});break;
       case 'ARC':add({t:'arc',c:{x:num(r,10),y:num(r,20)},r:num(r,40),a0:num(r,50)/R2D,a1:num(r,51)/R2D});break;
+      case 'POINT':add({t:'point',p:{x:num(r,10),y:num(r,20)}});break;
+      case 'XLINE':case 'RAY':add({t:r.type==='XLINE'?'xline':'ray',p:{x:num(r,10),y:num(r,20)},ang:Math.atan2(num(r,21),num(r,11))});break;
       case 'LWPOLYLINE':{
         const vs=[];
         for(const[c,v]of r.d){if(c===10)vs.push({x:parseFloat(v),y:0,b:0});else if(c===20&&vs.length)vs[vs.length-1].y=parseFloat(v);else if(c===42&&vs.length)vs[vs.length-1].b=parseFloat(v);}
@@ -1197,19 +2384,34 @@ function parseDXF(txt){
         if(s)add({t:'text',p:{x:num(r,10),y:num(r,20)},s,h:num(r,40,2.5),rot:a});break;}
       case 'ELLIPSE':{
         const c={x:num(r,10),y:num(r,20)},mx=num(r,11),my=num(r,21),ratio=num(r,40,1),s0=num(r,41,0),s1=num(r,42,TAU);
-        const full=Math.abs((s1-s0)-TAU)<1e-6,N=72,P=[];
-        for(let k=0;k<=N;k++){const t=s0+(s1-s0)*k/N;P.push({x:c.x+mx*Math.cos(t)-my*ratio*Math.sin(t),y:c.y+my*Math.cos(t)+mx*ratio*Math.sin(t)});}
-        if(full)P.pop();add({t:'pl',p:P,closed:full});skipped['ELLIPSE (approximated)']=(skipped['ELLIPSE (approximated)']||0)+1;break;}
+        const full=Math.abs((s1-s0)-TAU)<1e-6||Math.abs(s1-s0)<1e-9;
+        if(full){const rx=Math.hypot(mx,my);if(rx>0)add({t:'ellipse',c,rx,ry:rx*ratio,rot:Math.atan2(my,mx)});}
+        else{
+          const N=72,P=[];
+          for(let k=0;k<=N;k++){const t=s0+(s1-s0)*k/N;P.push({x:c.x+mx*Math.cos(t)-my*ratio*Math.sin(t),y:c.y+my*Math.cos(t)+mx*ratio*Math.sin(t)});}
+          add({t:'pl',p:P,closed:false});skipped['ELLIPSE arc (approximated)']=(skipped['ELLIPSE arc (approximated)']||0)+1;
+        }
+        break;}
       case 'SPLINE':{
-        let P=[];const fit=r.d.some(q=>q[0]===11);
-        let cx=null;
+        const fit=r.d.some(q=>q[0]===11);let P=[],cx=null;
         for(const[c,v]of r.d){
           if(c===(fit?11:10)){cx=parseFloat(v);}
           else if(c===(fit?21:20)&&cx!==null){P.push({x:cx,y:parseFloat(v)});cx=null;}
         }
-        if(P.length>=2)add({t:'pl',p:P,closed:(num(r,70,0)&1)===1});
-        skipped['SPLINE (approximated)']=(skipped['SPLINE (approximated)']||0)+1;break;}
+        if(P.length>=2){
+          if(fit)add({t:'spline',p:P,closed:(num(r,70,0)&1)===1});
+          else{add({t:'pl',p:P,closed:(num(r,70,0)&1)===1});skipped['SPLINE (control polygon)']=(skipped['SPLINE (control polygon)']||0)+1;}
+        }
+        break;}
       default:skipped[r.type]=(skipped[r.type]||0)+1;
+    }
+    // per-entity color / linetype / lineweight
+    for(let k=n0;k<ents.length;k++){
+      const e=ents[k];
+      if(has(r,420))e.col='#'+Math.round(num(r,420)).toString(16).padStart(6,'0');
+      else if(has(r,62)&&num(r,62)>0&&num(r,62)<256)e.col=aciColor(num(r,62));
+      const lt=ltFromName(str(r,6));if(lt)e.lt=lt;
+      const lw=lwFromCode(num(r,370,-3));if(lw!=null)e.lw=lw;
     }
   }
   return{ents,layers,skipped};
@@ -1246,21 +2448,6 @@ const solidH=()=>Math.max(parseFloat($('opt3H').value)||50,0.001);
 const pickColor=()=>$('opt3Color').value||'#4da3ff';
 const hexRgb=h=>{const m=/^#?([0-9a-f]{6})$/i.exec(h||'');const n=m?parseInt(m[1],16):0x4da3ff;return[n>>16&255,n>>8&255,n&255];};
 
-const TOOLS3=[
- ['select','↖','Select','V','Select: click a solid (Shift = add/remove). Arrow keys nudge in XY, PgUp/PgDn in Z, Del deletes. Edit values in Properties.'],
- ['orbit','⟲','Orbit','O','Orbit: drag to rotate the view, Shift+drag to pan. Right-drag also orbits, middle-drag pans, wheel zooms.'],
- null,
- ['box','▣','Box','B','Box: click two opposite base corners on the ground. Height comes from the Height option.'],
- ['cyl','⏺','Cylinder','C','Cylinder: click the center, then a point for the radius. Height comes from the Height option.'],
- ['cone','△','Cone','N','Cone: click the center, then a point for the radius. Height comes from the Height option.'],
- ['sph','●','Sphere','S','Sphere: click the center, then a point for the radius.'],
- ['ext','⬒','Extrude','E','Extrude: click inside a closed 2D shape (rectangle, closed polyline, circle) drawn in 2D mode.'],
- null,
- ['move','✥','Move','M','Move: click a base point, then a destination point on the ground. Use the Z field for height.'],
- ['copy','⧉','Copy','P','Copy: click a base point, then destination points. Esc to stop.'],
- ['del','🗑','Delete','Del','Delete the selected solids.']
-];
-const KEY3={v:'select',o:'orbit',b:'box',c:'cyl',n:'cone',s:'sph',e:'ext',m:'move',p:'copy'};
 const NEEDSEL3=['move','copy'];
 
 /* mesh */
@@ -1297,11 +2484,16 @@ function localMesh(s){
     for(let i=0;i<nn;i++){const j=(i+1)%nn;
       F.push([bp,rings[0][j],rings[0][i]]);F.push([rings[nl-2][i],rings[nl-2][j],tp]);
       for(let k=0;k<nl-2;k++)F.push([rings[k][i],rings[k][j],rings[k+1][j],rings[k+1][i]]);}
+  }else if(s.t==='mesh'){
+    return{V:s.V.map(v=>v.slice()),F:s.F};
   }else if(s.t==='ext'){
-    const n=s.p.length,b=[],t=[];
-    s.p.forEach(q=>b.push(add(q.x,q.y,0)));s.p.forEach(q=>t.push(add(q.x,q.y,s.h)));
-    for(let i=0;i<n;i++){const j=(i+1)%n;F.push([b[i],b[j],t[j],t[i]]);}
-    F.push(t.slice());F.push(b.slice().reverse());
+    const hs=s.holes||[],loops=[s.p,...hs],n=loops.reduce((q,l)=>q+l.length,0),off=[];
+    let k=0;loops.forEach(l=>{off.push(k);k+=l.length;});
+    loops.forEach(l=>l.forEach(q=>add(q.x,q.y,0)));
+    loops.forEach(l=>l.forEach(q=>add(q.x,q.y,s.h)));
+    loops.forEach((l,li)=>{for(let i=0;i<l.length;i++){const j=(i+1)%l.length;F.push([off[li]+i,off[li]+j,n+off[li]+j,n+off[li]+i]);}});
+    if(!hs.length){F.push(s.p.map((_,i)=>n+i));F.push(s.p.map((_,i)=>i).reverse());}
+    else{const T=triHoles(s.p,hs);T.tris.forEach(t=>{F.push([n+t[0],n+t[1],n+t[2]]);F.push([t[0],t[2],t[1]]);});}
     return{V,F};
   }
   orientConvex(V,F);
@@ -1363,6 +2555,7 @@ function snapG(sx,sy){
   const st=snapStep();return{x:Math.round(g.x/st)*st,y:Math.round(g.y/st)*st};
 }
 function e2poly(e){
+  if(e.t==='ellipse'||e.t==='spline'){const c=curveOf(e);return c.closed?[...c.p,c.p[0]]:c.p;}
   if(e.t==='line')return[e.a,e.b];
   if(e.t==='pl')return e.closed?[...e.p,e.p[0]]:e.p;
   if(e.t==='circle'){const o=[];for(let i=0;i<=64;i++)o.push(pt(e.c,e.r,i*TAU/64));return o;}
@@ -1404,10 +2597,13 @@ function render3d(){
   // 2D drawing on the ground plane
   ctx.lineWidth=1.2;ctx.globalAlpha=.6;
   for(const e of visEnts()){
-    const pl=e2poly(e);if(!pl)continue;
-    ctx.strokeStyle=layerOf(e.layer).color;ctx.beginPath();let st=false;
-    for(const q of pl){const p=P([q.x,q.y,0]);if(!p){st=false;continue;}st?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y);st=true;}
-    ctx.stroke();
+    const pls=e.t==='region'?e.loops.map(l=>[...l,l[0]]):[e2poly(e)];
+    for(const pl of pls){
+      if(!pl)continue;
+      ctx.strokeStyle=effCol(e);ctx.beginPath();let st=false;
+      for(const q of pl){const p=P([q.x,q.y,0]);if(!p){st=false;continue;}st?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y);st=true;}
+      ctx.stroke();
+    }
   }
   ctx.globalAlpha=1;
   // solids
@@ -1416,25 +2612,33 @@ function render3d(){
   for(const s of previewSolids3())all.push({s,pre:true});
   const faces=[];
   for(const{s,pre}of all){
-    const M=worldMesh(s),rgb=hexRgb(s.color),isSel=sel3.has(s.id);
-    for(const f of M.F){
-      const n=fnorm(M.V,f),fc=[0,0,0];f.forEach(i=>{fc[0]+=M.V[i][0]/f.length;fc[1]+=M.V[i][1]/f.length;fc[2]+=M.V[i][2]/f.length;});
+    const M=worldMesh(s),rgb=(sub3&&sub3.subs.includes(s.id))?[230,80,80]:hexRgb(s.color),isSel=sel3.has(s.id),mf=s.t==='mesh'?meshFeat(s):null;
+    for(let fi=0;fi<M.F.length;fi++){
+      const f=M.F[fi],n=fnorm(M.V,f),fc=[0,0,0];f.forEach(i=>{fc[0]+=M.V[i][0]/f.length;fc[1]+=M.V[i][1]/f.length;fc[2]+=M.V[i][2]/f.length;});
       const view=cam.persp?[B.eye[0]-fc[0],B.eye[1]-fc[1],B.eye[2]-fc[2]]:[-B.f[0],-B.f[1],-B.f[2]];
       const front=dot(n,view)>0;
       if(!front&&!cam.wire)continue;
       const poly=[];let bad=false,ds=0;
       for(const i of f){const p=P(M.V[i]);if(!p){bad=true;break;}poly.push(p);ds+=p.z;}
       if(bad)continue;
-      faces.push({id:s.id,poly,depth:ds/f.length,k:Math.min(1.1,0.3+0.7*Math.max(0,dot(n,L))+(isSel?0.12:0)),rgb,sel:isSel,pre});
+      faces.push({id:s.id,poly,depth:ds/f.length,k:Math.min(1.1,0.3+0.7*Math.max(0,dot(n,L))+(isSel?0.12:0)),rgb,sel:isSel,pre,fi,ef:mf?mf[fi]:null,hl:!!(pp3&&!pre&&pp3.id===s.id&&pp3.fi===fi)});
     }
   }
   faces.sort((a,b)=>b.depth-a.depth);
   faces3=faces.filter(f=>!f.pre);
   for(const fc of faces){
     ctx.beginPath();fc.poly.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();
-    if(!cam.wire){const c=fc.rgb.map(v=>Math.min(255,Math.round(v*fc.k)));ctx.fillStyle=`rgba(${c[0]},${c[1]},${c[2]},${fc.pre?.45:1})`;ctx.fill();}
-    ctx.strokeStyle=fc.sel?'#ffffff':(cam.wire?`rgb(${fc.rgb.join(',')})`:'rgba(0,0,0,.45)');
-    ctx.lineWidth=fc.sel?1.8:1;ctx.stroke();
+    let fill=null;
+    if(!cam.wire){const c=(fc.hl?[255,214,77]:fc.rgb).map(v=>Math.min(255,Math.round(v*fc.k)));fill=`rgba(${c[0]},${c[1]},${c[2]},${fc.pre?.45:1})`;ctx.fillStyle=fill;ctx.fill();}
+    if(fc.ef){
+      if(fill){ctx.strokeStyle=fill;ctx.lineWidth=1;ctx.stroke();}
+      ctx.beginPath();const n=fc.poly.length;
+      for(let k=0;k<n;k++)if(fc.ef[k]){const a=fc.poly[k],b=fc.poly[(k+1)%n];ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);}
+      ctx.strokeStyle=fc.sel?'#ffffff':(cam.wire?`rgb(${fc.rgb.join(',')})`:'rgba(0,0,0,.55)');ctx.lineWidth=fc.sel?1.8:1;ctx.stroke();
+    }else{
+      ctx.strokeStyle=fc.sel?'#ffffff':(cam.wire?`rgb(${fc.rgb.join(',')})`:'rgba(0,0,0,.45)');
+      ctx.lineWidth=fc.sel?1.8:1;ctx.stroke();
+    }
   }
   // cursor + hud
   const g=m3.g,cp=P([g.x,g.y,0]);
@@ -1448,22 +2652,283 @@ function pick3(sx,sy){
   return null;
 }
 
+/* ---------- Mesh tools: weld, CSG, revolve, press/pull ---------- */
+function weld(V,F,eps){
+  eps=eps||1e-6;const map=new Map(),nv=[];
+  const idx=V.map(v=>{const k=Math.round(v[0]/eps)+','+Math.round(v[1]/eps)+','+Math.round(v[2]/eps);let i=map.get(k);if(i===undefined){i=nv.length;nv.push([v[0],v[1],v[2]]);map.set(k,i);}return i;});
+  const nf=F.map(f=>{const o=[];for(const i of f){const j=idx[i];if(!o.length||o[o.length-1]!==j)o.push(j);}if(o.length>1&&o[0]===o[o.length-1])o.pop();return o;});
+  return{V:nv,F:nf};
+}
+function compactMesh(V,F){
+  const keep=F.filter(f=>f.length>=3),map=new Map(),nv=[];
+  const nf=keep.map(f=>f.map(i=>{let j=map.get(i);if(j===undefined){j=nv.length;nv.push(V[i]);map.set(i,j);}return j;}));
+  return{V:nv,F:nf};
+}
+function meshVolume(V,F){
+  let v=0;
+  for(const f of F)for(const t of triangulate(V,f)){const a=V[t[0]],b=V[t[1]],c=V[t[2]];v+=dot(a,cross3(b,c))/6;}
+  return v;
+}
+function isConvexFace(V,f){
+  if(f.length<=3)return true;
+  const n=fnorm(V,f);
+  for(let i=0;i<f.length;i++){
+    const a=V[f[i]],b=V[f[(i+1)%f.length]],c=V[f[(i+2)%f.length]];
+    const e1=[b[0]-a[0],b[1]-a[1],b[2]-a[2]],e2=[c[0]-b[0],c[1]-b[1],c[2]-b[2]];
+    if(dot(cross3(e1,e2),n)<-1e-9)return false;
+  }
+  return true;
+}
+/* --- BSP CSG (after csg.js by Evan Wallace, MIT) --- */
+const CE=1e-5;
+class CPlane{
+  constructor(n,w){this.n=n;this.w=w;}
+  clone(){return new CPlane(this.n.slice(),this.w);}
+  flip(){this.n=this.n.map(x=>-x);this.w=-this.w;}
+  split(poly,cf,cb,f,b){
+    let pt_=0;const types=[];
+    for(const v of poly.v){const t=dot(this.n,v)-this.w,ty=t<-CE?2:(t>CE?1:0);pt_|=ty;types.push(ty);}
+    if(pt_===0){(dot(this.n,poly.pl.n)>0?cf:cb).push(poly);}
+    else if(pt_===1)f.push(poly);
+    else if(pt_===2)b.push(poly);
+    else{
+      const F=[],B=[],n=poly.v.length;
+      for(let i=0;i<n;i++){
+        const j=(i+1)%n,ti=types[i],tj=types[j],vi=poly.v[i],vj=poly.v[j];
+        if(ti!==2)F.push(vi);
+        if(ti!==1)B.push(ti!==2?vi.slice():vi);
+        if((ti|tj)===3){
+          const t=(this.w-dot(this.n,vi))/dot(this.n,[vj[0]-vi[0],vj[1]-vi[1],vj[2]-vi[2]]);
+          const v=[vi[0]+(vj[0]-vi[0])*t,vi[1]+(vj[1]-vi[1])*t,vi[2]+(vj[2]-vi[2])*t];
+          F.push(v);B.push(v.slice());
+        }
+      }
+      if(F.length>=3)f.push(new CPoly(F,poly.pl.clone()));
+      if(B.length>=3)b.push(new CPoly(B,poly.pl.clone()));
+    }
+  }
+}
+class CPoly{
+  constructor(v,pl){this.v=v;this.pl=pl;}
+  flip(){this.v.reverse();this.pl.flip();}
+}
+class CNode{
+  constructor(polys){this.pl=null;this.f=null;this.b=null;this.polys=[];if(polys)this.build(polys);}
+  invert(){for(const p of this.polys)p.flip();if(this.pl)this.pl.flip();if(this.f)this.f.invert();if(this.b)this.b.invert();const t=this.f;this.f=this.b;this.b=t;}
+  clipPolys(polys){
+    if(!this.pl)return polys.slice();
+    let f=[],b=[];
+    for(const p of polys)this.pl.split(p,f,b,f,b);
+    if(this.f)f=this.f.clipPolys(f);
+    if(this.b)b=this.b.clipPolys(b);else b=[];
+    return f.concat(b);
+  }
+  clipTo(bsp){this.polys=bsp.clipPolys(this.polys);if(this.f)this.f.clipTo(bsp);if(this.b)this.b.clipTo(bsp);}
+  all(){let p=this.polys.slice();if(this.f)p=p.concat(this.f.all());if(this.b)p=p.concat(this.b.all());return p;}
+  build(polys){
+    if(!polys.length)return;
+    if(!this.pl)this.pl=polys[0].pl.clone();
+    const f=[],b=[];
+    for(const p of polys)this.pl.split(p,this.polys,this.polys,f,b);
+    if(f.length){if(!this.f)this.f=new CNode();this.f.build(f);}
+    if(b.length){if(!this.b)this.b=new CNode();this.b.build(b);}
+  }
+}
+const clonePolys=P=>P.map(p=>new CPoly(p.v.map(v=>v.slice()),p.pl.clone()));
+function polyPlane(v){
+  let nx=0,ny=0,nz=0;
+  for(let i=0;i<v.length;i++){const a=v[i],b=v[(i+1)%v.length];nx+=(a[1]-b[1])*(a[2]+b[2]);ny+=(a[2]-b[2])*(a[0]+b[0]);nz+=(a[0]-b[0])*(a[1]+b[1]);}
+  const l=Math.hypot(nx,ny,nz);if(l<1e-12)return null;
+  const n=[nx/l,ny/l,nz/l];return new CPlane(n,dot(n,v[0]));
+}
+function solidPolys(s){
+  const M=worldMesh(s),out=[];
+  for(const f of M.F){
+    const parts=isConvexFace(M.V,f)?[f]:triangulate(M.V,f);
+    for(const t of parts){const v=t.map(i=>M.V[i].slice()),pl=polyPlane(v);if(pl)out.push(new CPoly(v,pl));}
+  }
+  return out;
+}
+function csgOp(op,A,B){
+  const a=new CNode(clonePolys(A)),b=new CNode(clonePolys(B));
+  if(op==='union'){a.clipTo(b);b.clipTo(a);b.invert();b.clipTo(a);b.invert();a.build(b.all());return a.all();}
+  if(op==='sub'){a.invert();a.clipTo(b);b.clipTo(a);b.invert();b.clipTo(a);b.invert();a.build(b.all());a.invert();return a.all();}
+  a.invert();b.clipTo(a);b.invert();a.clipTo(b);b.clipTo(a);a.build(b.all());a.invert();return a.all();
+}
+function polysToMesh(polys){
+  const V=[],F=[];
+  for(const p of polys){const b=V.length;p.v.forEach(v=>V.push(v));F.push(p.v.map((_,i)=>b+i));}
+  const W=weld(V,F,1e-5),C=compactMesh(W.V,W.F);
+  C.F=C.F.filter(f=>{const n=fnorm(C.V,f);return n.every(Number.isFinite)&&triArea(C.V,f)>1e-9;});
+  return compactMesh(C.V,C.F);
+}
+function triArea(V,f){let a=0;for(let i=1;i<f.length-1;i++){const p=V[f[0]],q=V[f[i]],r=V[f[i+1]],c=cross3([q[0]-p[0],q[1]-p[1],q[2]-p[2]],[r[0]-p[0],r[1]-p[1],r[2]-p[2]]);a+=Math.hypot(...c)/2;}return a;}
+/* --- revolve a profile (outer CCW + holes CW) about an axis A-B in the XY plane --- */
+function revolveMesh(prof,A,B,angDeg){
+  const L=dist(A,B);if(L<1e-9)return{err:'The axis points must be different.'};
+  const ux=(B.x-A.x)/L,uy=(B.y-A.y)/L,nx=-uy,ny=ux;
+  const loops=[ccw(prof.outer),...prof.holes.map(cw)];
+  let pos=false,neg=false;
+  const info=loops.map(l=>l.map(q=>{const a=(q.x-A.x)*ux+(q.y-A.y)*uy,r=(q.x-A.x)*nx+(q.y-A.y)*ny;if(r>1e-9)pos=true;if(r<-1e-9)neg=true;return{a,r};}));
+  if(pos&&neg)return{err:'The profile crosses the axis. Place the axis along an edge or outside the shape.'};
+  if(!pos&&!neg)return{err:'The profile lies on the axis.'};
+  const sgn=pos?1:-1,full=angDeg>=359.999,ang=Math.min(angDeg,360)/R2D,N=full?48:Math.max(6,Math.ceil(angDeg/7.5));
+  const P=(o,k)=>{const th=ang*k/N,c=Math.cos(th),s=Math.sin(th);return[A.x+o.a*ux+o.r*c*nx,A.y+o.a*uy+o.r*c*ny,o.r*s];};
+  const V=[],F=[];
+  const vid=(li,i,k)=>{V.push(P(info[li][i],k));return V.length-1;};
+  info.forEach((lp,li)=>{
+    for(let i=0;i<lp.length;i++){
+      const j=(i+1)%lp.length;
+      for(let k=0;k<N;k++){
+        const q=[vid(li,i,k),vid(li,j,k),vid(li,j,k+1),vid(li,i,k+1)];
+        F.push(sgn>0?q:q.reverse());
+      }
+    }
+  });
+  if(!full){
+    const T=triHoles(loops[0],loops.slice(1)),flat=loops.flat(),inf=info.flat();
+    const orient=(t,dir)=>{const a=t[0],b=t[1],c=t[2],nn=cross3([b[0]-a[0],b[1]-a[1],b[2]-a[2]],[c[0]-a[0],c[1]-a[1],c[2]-a[2]]);return dot(nn,dir)>=0;};
+    const t0=[0,0,-sgn],th=ang,t1=[-Math.sin(th)*nx*sgn,-Math.sin(th)*ny*sgn,Math.cos(th)*sgn];
+    const tg=[sgn*(-Math.sin(th)*nx),sgn*(-Math.sin(th)*ny),sgn*Math.cos(th)];
+    for(const t of T.tris){
+      for(const[k,dir]of[[0,t0],[N,tg]]){
+        const ids=t.map(i=>{V.push(P(inf[i],k));return V.length-1;});
+        const ok=orient(ids.map(i=>V[i]),dir);
+        F.push(ok?ids:ids.slice().reverse());
+      }
+    }
+  }
+  const W=weld(V,F,1e-6),C=compactMesh(W.V,W.F);
+  return{V:C.V,F:C.F};
+}
+/* --- press/pull a flat face (all connected coplanar faces move together) --- */
+function pressPullMesh(V0,F0,fi,d){
+  const W=weld(V0,F0),V=W.V,F=W.F.map(f=>f.slice());
+  const n0=fnorm(V,F[fi]),w0=dot(n0,V[F[fi][0]]);
+  let sc=1;V.forEach(v=>{sc=Math.max(sc,Math.abs(v[0]),Math.abs(v[1]),Math.abs(v[2]));});
+  const edgeFace=new Map();F.forEach((f,i)=>{for(let k=0;k<f.length;k++)edgeFace.set(f[k]+'_'+f[(k+1)%f.length],i);});
+  const group=new Set([fi]),q=[fi];
+  while(q.length){
+    const i=q.pop(),f=F[i];
+    for(let k=0;k<f.length;k++){
+      const j=edgeFace.get(f[(k+1)%f.length]+'_'+f[k]);
+      if(j===undefined||group.has(j)||F[j].length<3)continue;
+      const nj=fnorm(V,F[j]);
+      if(dot(nj,n0)>0.999999&&Math.abs(dot(n0,V[F[j][0]])-w0)<1e-6*sc)group.add(j);
+      if(group.has(j))q.push(j);
+    }
+  }
+  const bd=[];
+  for(const i of group){const f=F[i];for(let k=0;k<f.length;k++){const a=f[k],b=f[(k+1)%f.length],j=edgeFace.get(b+'_'+a);if(j===undefined||!group.has(j))bd.push([a,b]);}}
+  const mp=new Map(),nvx=v=>{if(!mp.has(v)){V.push([V[v][0]+n0[0]*d,V[v][1]+n0[1]*d,V[v][2]+n0[2]*d]);mp.set(v,V.length-1);}return mp.get(v);};
+  const NF=[];F.forEach((f,i)=>{if(!group.has(i))NF.push(f);});
+  for(const i of group)NF.push(F[i].map(nvx));
+  for(const[a,b]of bd)NF.push([a,b,nvx(b),nvx(a)]);
+  return compactMesh(V,NF);
+}
+
+const mfc=new WeakMap();
+function meshFeat(s){
+  const c=mfc.get(s);if(c&&c.F===s.F)return c.flags;
+  const V=s.V,F=s.F,em=new Map(),Nn=F.map(f=>fnorm(V,f));
+  F.forEach((f,i)=>{for(let k=0;k<f.length;k++){const a=f[k],b=f[(k+1)%f.length],key=a<b?a+'_'+b:b+'_'+a;let l=em.get(key);if(!l){l=[];em.set(key,l);}l.push(i);}});
+  const flags=F.map((f,i)=>f.map((a,k)=>{const b=f[(k+1)%f.length],l=em.get(a<b?a+'_'+b:b+'_'+a);if(l.length!==2)return true;const j=l[0]===i?l[1]:l[0];return dot(Nn[i],Nn[j])<0.9995;}));
+  mfc.set(s,{F,flags});return flags;
+}
 /* editing */
-function add3(s){s.id=S.next++;S.solids.push(s);sel3=new Set([s.id]);commit();}
+let sub3=null,pp3=null,rev3=null;
+function add3(s){s.id=S.next++;S.solids.push(s);sel3=new Set([s.id]);commit();return s;}
 function del3(){
   if(!sel3.size){setMsg('Select a solid first.');return;}
   S.solids=S.solids.filter(s=>!sel3.has(s.id));sel3.clear();commit();
 }
-function extrudeAt(p){
+/* find the 2D area under a ground point: region, closed shape (+ nested holes) or enclosed boundary */
+function regionAt(g){
+  const rs=visEnts().filter(e=>e.t==='region'&&pip(g,e.loops[0])&&!e.loops.slice(1).some(h=>pip(g,h)));
+  if(rs.length){rs.sort((u,v)=>area(u.loops[0])-area(v.loops[0]));const L=rs[0].loops;return{outer:ccw(L[0]),holes:L.slice(1).map(cw)};}
   const cands=[];
-  for(const e of visEnts()){const q=polyOf(e);if(q&&pip(p,q))cands.push({q,a:area(q)});}
-  if(!cands.length){setMsg('Click inside a closed 2D shape (rectangle, closed polyline or circle).');return;}
-  cands.sort((x,y)=>x.a-y.a);
-  const q=cands[0].q.map(v=>({x:v.x,y:v.y}));
-  let sa=0;for(let i=0;i<q.length;i++){const b=q[(i+1)%q.length];sa+=q[i].x*b.y-b.x*q[i].y;}
-  if(sa<0)q.reverse();
-  const b=ebox({t:'pl',p:q}),cx=(b.x0+b.x1)/2,cy=(b.y0+b.y1)/2;
-  add3({t:'ext',x:cx,y:cy,z:0,rot:0,h:solidH(),color:pickColor(),p:q.map(v=>({x:v.x-cx,y:v.y-cy}))});
+  for(const e of visEnts()){if(e.t==='region')continue;const L=loopsOf(e);if(L&&pip(g,L[0]))cands.push({e,L:L[0],a:area(L[0])});}
+  if(cands.length){
+    cands.sort((x,y)=>x.a-y.a);const out=cands[0];let holes=[];
+    if($('opt3Holes').checked){
+      const inner=[];
+      for(const e of visEnts()){if(e===out.e||e.t==='region')continue;const L=loopsOf(e);if(L){const l0=L[0];if(area(l0)<out.a&&l0.every(v=>pip(v,out.L)))inner.push(l0);}}
+      holes=inner.filter((h,i)=>!inner.some((k,j)=>j!==i&&area(k)>area(h)&&h.every(v=>pip(v,k)))).map(cw);
+    }
+    return{outer:ccw(out.L),holes};
+  }
+  return boundaryAt(g);
+}
+function extrudeAt(g){
+  const r=regionAt(g);
+  if(!r){setMsg('Click inside a closed 2D shape, region or fully enclosed area.');return;}
+  const b=ebox({t:'pl',p:r.outer}),cx=(b.x0+b.x1)/2,cy=(b.y0+b.y1)/2,loc=l=>l.map(v=>({x:v.x-cx,y:v.y-cy}));
+  add3({t:'ext',x:cx,y:cy,z:0,rot:0,h:solidH(),color:pickColor(),p:loc(r.outer),holes:r.holes.map(loc)});
+}
+function doRevolve(r,A,B){
+  const res=revolveMesh(r,A,B,Math.max(1,Math.min(360,parseFloat($('opt3Ang').value)||360)));
+  if(res.err){setMsg(res.err);return false;}
+  add3({t:'mesh',x:0,y:0,z:0,rot:0,V:res.V,F:res.F,color:pickColor()});return true;
+}
+function axisFromClick(q){
+  const g=groundPt(q.x,q.y,0);
+  if(g){
+    const tol=8*cam.dist/(cv.clientHeight*0.9);let best=null,bd=tol;
+    for(const e of visEnts())if(e.t==='line'){const d=segDist(g,e.a,e.b);if(d<bd){bd=d;best=e;}}
+    if(best)return[{x:best.a.x,y:best.a.y},{x:best.b.x,y:best.b.y}];
+  }
+  const s=snapG(q.x,q.y);return s?[s]:null;
+}
+function bool3(kind){
+  const ss=S.solids.filter(s=>sel3.has(s.id));
+  if(ss.length<2){setMsg('Select two or more solids first.');return false;}
+  let polys=solidPolys(ss[0]);
+  for(let i=1;i<ss.length;i++)polys=csgOp(kind==='union'?'union':'int',polys,solidPolys(ss[i]));
+  return finishBool(ss,polys);
+}
+function finishBool(ss,polys){
+  const M=polysToMesh(polys);
+  if(!M.F.length){setMsg('The result is empty (the solids do not overlap).');return false;}
+  S.solids=S.solids.filter(s=>!ss.includes(s));
+  add3({t:'mesh',x:0,y:0,z:0,rot:0,V:M.V,F:M.F,color:ss[0].color||'#4da3ff'});
+  return true;
+}
+function doSubtract(){
+  if(!sub3||!sub3.subs.length){setMsg('Click the solid(s) to subtract first.');return false;}
+  const from=S.solids.filter(s=>sub3.from.includes(s.id)),subs=S.solids.filter(s=>sub3.subs.includes(s.id));
+  let polys=solidPolys(from[0]);
+  for(let i=1;i<from.length;i++)polys=csgOp('union',polys,solidPolys(from[i]));
+  for(const b of subs)polys=csgOp('sub',polys,solidPolys(b));
+  return finishBool([...from,...subs],polys);
+}
+function finish3(){
+  if(tool3==='subtract'&&sub3){const ok=doSubtract();sub3=null;if(ok!==false)setTool3('select');else{setTool3('select');}return;}
+}
+const enter3=finish3;
+function cancel3(){
+  if(pts3.length||sub3||rev3||pp3){pts3=[];sub3=null;rev3=null;pp3=null;if(tool3!=='select')setTool3('select');}
+  else if(sel3.size){sel3.clear();refreshUI();}
+  else if(tool3!=='select')setTool3('select');
+  redraw();
+}
+function pickFace3(sx,sy){
+  const q={x:sx,y:sy};
+  for(let i=faces3.length-1;i>=0;i--)if(pip(q,faces3[i].poly))return{id:faces3[i].id,fi:faces3[i].fi};
+  return null;
+}
+function doPressPull(hit,d){
+  const s=S.solids.find(x=>x.id===hit.id);if(!s||!d)return false;
+  const M=worldMesh(s),f=M.F[hit.fi];if(!f)return false;
+  const n=fnorm(M.V,f);
+  if(n[2]>0.9999&&(s.t==='box'||s.t==='ext'||s.t==='cyl')&&Math.abs(M.V[f[0]][2]-((s.z||0)+s.h))<1e-6){
+    if(s.h+d<=1e-6){setMsg('Cannot push the face through the solid.');return false;}
+    s.h+=d;commit();return true;
+  }
+  const R=pressPullMesh(M.V,M.F,hit.fi,d);
+  if(!R.F.length){setMsg('Press/Pull failed.');return false;}
+  const idx=S.solids.indexOf(s);
+  S.solids[idx]={t:'mesh',id:s.id,x:0,y:0,z:0,rot:0,V:R.V,F:R.F,color:s.color};
+  commit();return true;
 }
 function click3(q,ev){
   if(tool3==='select'){
@@ -1472,7 +2937,31 @@ function click3(q,ev){
     if(id!==null){if(ev.shiftKey&&sel3.has(id))sel3.delete(id);else sel3.add(id);}
     refreshUI();return;
   }
+  if(tool3==='subtract'){
+    const id=pick3(q.x,q.y);
+    if(id!==null&&sub3&&!sub3.from.includes(id)){const i=sub3.subs.indexOf(id);if(i>=0)sub3.subs.splice(i,1);else sub3.subs.push(id);setMsg(`${sub3.subs.length} solid(s) to subtract. Click more, or press Enter.`);}
+    redraw();return;
+  }
+  if(tool3==='pp'){
+    const hit=pickFace3(q.x,q.y);
+    if(!hit){setMsg('Click a flat face of a solid.');return;}
+    pp3=hit;sel3=new Set([hit.id]);refreshUI();redraw();
+    dlg('Press/Pull',[{k:'d',l:'Distance (negative = push in)',v:10}],v=>{const ok=doPressPull(hit,v.d);pp3=null;if(ok===false)redraw();},()=>{pp3=null;redraw();});
+    return;
+  }
   if(tool3==='ext'){const g=groundPt(q.x,q.y,0);if(g)extrudeAt(g);return;}
+  if(tool3==='rev'){
+    if(!rev3){
+      const g=groundPt(q.x,q.y,0);if(!g)return;
+      const r=regionAt(g);if(!r){setMsg('Click inside a closed 2D shape, region or enclosed area to revolve.');return;}
+      rev3={r,axis:[]};setMsg('Profile picked. Click the first axis point (or click a 2D line to use it as the axis).');redraw();return;
+    }
+    const ax=axisFromClick(q);if(!ax)return;
+    rev3.axis.push(...ax);
+    if(rev3.axis.length>=2){const r=rev3.r,a=rev3.axis;rev3=null;doRevolve(r,a[0],a[1]);}
+    else setMsg('Click the second axis point.');
+    redraw();return;
+  }
   const g=snapG(q.x,q.y);if(!g)return;
   switch(tool3){
     case 'box':
@@ -1498,21 +2987,30 @@ function click3(q,ev){
   redraw();
 }
 function setTool3(t){
+  closeDlg();
   if(t==='del'){del3();return;}
+  if(t==='union'||t==='intersect'){bool3(t);t='select';}
   if(NEEDSEL3.includes(t)&&!sel3.size){setMsg('Select a solid first, then use this command.');t='select';}
-  tool3=t;pts3=[];
+  let nsub=null;
+  if(t==='subtract'){
+    if(!sel3.size){setMsg('Select the solid(s) to subtract FROM first, then run Subtract.');t='select';}
+    else nsub={from:[...sel3],subs:[]};
+  }
+  tool3=t;pts3=[];sub3=nsub;rev3=null;pp3=null;
   document.querySelectorAll('#tools .tool').forEach(b=>b.classList.toggle('active',b.dataset.tool===t));
-  const info=TOOLS3.find(x=>x&&x[0]===t);if(info)setMsg(info[4]);
+  const info=TOOLS3.find(x=>x[0]===t);if(info)setMsg(info[4]);
   cv.style.cursor=t==='orbit'?'grab':'crosshair';
   redraw();
 }
 function volInfo(s){
   let v=0;
   if(s.t==='box')v=s.w*s.d*s.h;else if(s.t==='cyl')v=Math.PI*s.r*s.r*s.h;else if(s.t==='cone')v=Math.PI*s.r*s.r*s.h/3;
-  else if(s.t==='sph')v=4/3*Math.PI*s.r**3;else v=area(s.p)*s.h;
+  else if(s.t==='sph')v=4/3*Math.PI*s.r**3;
+  else if(s.t==='ext')v=(area(s.p)-(s.holes||[]).reduce((a,h)=>a+area(h),0))*s.h;
+  else v=Math.abs(meshVolume(s.V,s.F));
   return`Volume: <b>${fmt(v)}</b>`;
 }
-const NAMES3={box:'Box',cyl:'Cylinder',cone:'Cone',sph:'Sphere',ext:'Extrusion'};
+const NAMES3={box:'Box',cyl:'Cylinder',cone:'Cone',sph:'Sphere',ext:'Extrusion',mesh:'Solid (mesh)'};
 function rows3(s){
   const R=[],N=(l,g,st)=>R.push({l,k:'n',g,s:st});
   N('Base X',()=>s.x,v=>{s.x=v;});N('Base Y',()=>s.y,v=>{s.y=v;});N('Base Z',()=>s.z||0,v=>{s.z=v;});
@@ -1520,7 +3018,7 @@ function rows3(s){
   if(s.t==='box'){N('Width (X)',()=>s.w,v=>{if(v>0)s.w=v;});N('Depth (Y)',()=>s.d,v=>{if(v>0)s.d=v;});N('Height (Z)',()=>s.h,v=>{if(v>0)s.h=v;});}
   if(s.t==='cyl'||s.t==='cone'){N('Radius',()=>s.r,v=>{if(v>0)s.r=v;});N('Height (Z)',()=>s.h,v=>{if(v>0)s.h=v;});}
   if(s.t==='sph')N('Radius',()=>s.r,v=>{if(v>0)s.r=v;});
-  if(s.t==='ext'){N('Height (Z)',()=>s.h,v=>{if(v>0)s.h=v;});N('Scale XY (%)',()=>100,v=>{if(v>0)s.p=s.p.map(q=>({x:q.x*v/100,y:q.y*v/100}));});}
+  if(s.t==='ext'){N('Height (Z)',()=>s.h,v=>{if(v>0)s.h=v;});N('Scale XY (%)',()=>100,v=>{if(v>0){const f=q=>({x:q.x*v/100,y:q.y*v/100});s.p=s.p.map(f);if(s.holes)s.holes=s.holes.map(h=>h.map(f));}});}
   R.push({l:'Color',k:'c',g:()=>s.color||'#4da3ff',s:v=>{s.color=v;}});
   return R;
 }
@@ -1541,7 +3039,7 @@ function fieldRows(P,rows){
 function props3d(P){
   const es=S.solids.filter(s=>sel3.has(s.id));
   if(!es.length){P.innerHTML='No solid selected.<br>Solids: <b>'+S.solids.length+'</b><br>Tip: pick a tool and click in the viewport. Right-drag orbits, wheel zooms, middle-drag pans.';return;}
-  P.innerHTML=`Selected: <b>${es.length}</b> solid(s)`+(es.length===1?`<br>${NAMES3[es[0].t]}<br>${volInfo(es[0])}`:'')+'<div style="height:6px"></div>';
+  P.innerHTML=`Selected: <b>${es.length}</b> solid(s)`+(es.length===1?`<br>${NAMES3[es[0].t]}${es[0].t==='ext'&&es[0].holes&&es[0].holes.length?` (${es[0].holes.length} hole(s))`:''}${es[0].t==='mesh'?` · ${es[0].F.length} faces`:''}<br>${volInfo(es[0])}`:'')+'<div style="height:6px"></div>';
   if(es.length===1)fieldRows(P,rows3(es[0]));
   else fieldRows(P,[{l:'Base Z',k:'n',g:()=>es[0].z||0,s:v=>es.forEach(s=>{s.z=v;})},{l:'Color',k:'c',g:()=>es[0].color||'#4da3ff',s:v=>es.forEach(s=>{s.color=v;})}]);
 }
@@ -1616,37 +3114,32 @@ function pm3(ev){
 function pu3(){drag3=null;}
 function key3d(ev){
   if(['INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName))return false;
+  if(ev.ctrlKey||ev.metaKey||ev.altKey)return false;
   const k=ev.key.toLowerCase();
-  if(ev.ctrlKey||ev.metaKey){
-    if(k==='a'){ev.preventDefault();S.solids.forEach(s=>sel3.add(s.id));refreshUI();return true;}
-    return false;
-  }
-  if(k==='escape'){if(pts3.length)pts3=[];else if(sel3.size){sel3.clear();refreshUI();}else setTool3('select');redraw();return true;}
-  if(k==='delete'||k==='backspace'){ev.preventDefault();del3();return true;}
   const nd={arrowleft:[-1,0,0],arrowright:[1,0,0],arrowup:[0,1,0],arrowdown:[0,-1,0],pageup:[0,0,1],pagedown:[0,0,-1]}[k];
   if(nd){ev.preventDefault();nudge3(...nd);return true;}
   const vw={1:'top',2:'front',3:'right',4:'iso'}[k];
   if(vw){view3(vw);return true;}
-  if(KEY3[k]){setTool3(KEY3[k]);return true;}
-  return true;
+  return false;
 }
 function cmd3(str){
-  const s=str.trim().toLowerCase();if(!s)return;
-  const A={select:'select',v:'select',orbit:'orbit',box:'box',cyl:'cyl',cylinder:'cyl',cone:'cone',sph:'sph',sphere:'sph',ext:'ext',extrude:'ext',move:'move',copy:'copy',del:'del',delete:'del',erase:'del'};
-  if(s==='2d'){setMode('2d');return;}
-  if(s==='u'||s==='undo')return undo();
-  if(s==='redo')return redo();
-  if(['top','front','right','iso'].includes(s))return view3(s);
-  if(s==='fit'||s==='ze')return fit3();
-  if(A[s])return setTool3(A[s]);
-  setMsg('Unknown 3D command: '+str);
+  const s=str.trim().toLowerCase();
+  if(!s){enter3();return;}
+  const w=s.split(/\s+/),head=w[0],arg=w.slice(1).join(' ');
+  if(head==='2d'){setMode('2d');return;}
+  if(head==='all'){S.solids.forEach(x=>sel3.add(x.id));refreshUI();redraw();return;}
+  if(['top','front','right','iso'].includes(head))return view3(head);
+  if(runAction(head,arg))return;
+  if(ALIAS3[head])return setTool3(ALIAS3[head]);
+  if(ALIAS[head]){setMode('2d');setTool(ALIAS[head]);return;}
+  setMsg('Unknown command: '+str);
 }
 
 /* mode switch */
 function setMode(m){
   mode=m;document.body.classList.toggle('m3',m==='3d');
   $('b2D').classList.toggle('on',m==='2d');$('b3D').classList.toggle('on',m==='3d');
-  pts=[];pts3=[];offTgt=null;pendingText=null;
+  pts=[];pts3=[];offTgt=null;pendingText=null;pend=null;phase=null;sub3=null;rev3=null;pp3=null;closeDlg();
   buildTools();
   if(m==='3d'){setTool3('select');fit3();}else setTool('select');
   refreshUI();
@@ -1665,15 +3158,20 @@ function resize(){
   ctx.setTransform(dpr,0,0,dpr,0,0);redraw();
 }
 new ResizeObserver(resize).observe(cv.parentElement);
-buildTools();
 try{const o=localStorage.getItem('minicad2d');if(o)Object.assign(S,JSON.parse(o));}catch(_){}
+try{const pb=parseFloat(localStorage.getItem('minicad_pb'));if(pb>=1&&pb<=50)PB=pb;}catch(_){}
+buildTools();
+$('cmd').addEventListener('input',updSug);
+$('cmd').addEventListener('blur',()=>{setTimeout(()=>{$('sug').style.display='none';},150);});
+$('sug').addEventListener('mousedown',ev=>{ev.preventDefault();const d=ev.target.closest('[data-i]');if(d)sugRun(+d.dataset.i);});
 hist=[snapshot()];hi=0;
 resize();
 view={ox:cv.clientWidth/2,oy:cv.clientHeight/2,s:2};
 if(S.ents.length)zoomExtents();
 setTool('select');refreshUI();updToggles();
-setMsg('Welcome! Pick a tool on the left (or press L, R, C…) and draw. Your drawing is auto-saved in this browser. Click 3D for solids.');
-window.__cad={setMode,setTool3,click3,pick3,render3d,groundPt,camBasis,proj,cam:()=>cam,worldMesh,localMesh,triangulate,fnorm,toOBJ,toSTL,key3d,extrudeAt,add3,sel3:()=>sel3,fit3,view3,S:()=>S,sel:()=>sel,click,setTool,runCmd,arc3,toSVG,toDXF,parseDXF,importDXF,entDist,ebox,trimAt,offsetEnt,doMirror,makeHatch,hatchSegs,dimParts,addEnt,commit,xform,mirrorF,grips,propRows,mouse:()=>mouse};
+setMsg('Welcome! Just start typing a command (L, C, REC, TR…) or click a ribbon button. Your drawing is auto-saved in this browser. Click 3D for solids.');
+window.__cad={setMode,setTool3,click3,pick3,render3d,groundPt,camBasis,proj,cam:()=>cam,worldMesh,localMesh,triangulate,fnorm,toOBJ,toSTL,key3d,extrudeAt,add3,sel3:()=>sel3,fit3,view3,S:()=>S,sel:()=>sel,click,setTool,runCmd,arc3,toSVG,toDXF,parseDXF,importDXF,entDist,ebox,trimAt,offsetEnt,doMirror,makeHatch,hatchSegs,dimParts,addEnt,commit,xform,mirrorF,grips,propRows,mouse:()=>mouse,
+  tool:()=>tool,phase:()=>phase,pts:()=>pts,boundaryAt,buildRegions,triHoles,csgOp,solidPolys,polysToMesh,meshVolume,revolveMesh,pressPullMesh,doPressPull,bool3,regionAt,doBreak,doJoin,doExplode,doRegion,doScale,doStretch,stretchEnt,doArrayRect,doArrayPolar,cornerCalc,doCorner,extendAt,makeBoundary,divideClick,qselDlg,finishSel,afterSel,finish,cancel,pickEnt,computeP,curveOf,layerOf,effLt,effCol,effLw,sub3:()=>sub3,finish3,doSubtract,setView:v=>{view=v;},stretchWin:()=>stretchWin,pend:()=>pend,ALIAS,ALIAS3,updSug,sugItems:()=>sugItems,hist:()=>hist,pickable};
 })();
 </script>
 </body>
